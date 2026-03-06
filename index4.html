@@ -325,6 +325,39 @@ a:hover { text-decoration: underline; }
 .expand-btn:hover { text-decoration: underline; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* Master Timeline */
+.mt-lane { margin-bottom: 20px; }
+.mt-lane-header { display: flex; align-items: center; gap: 10px; padding: 8px 0; margin-bottom: 8px; border-bottom: 1px solid var(--border-light); }
+.mt-lane-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.mt-lane-sub { font-size: 11px; color: var(--text-muted); }
+.mt-bar-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+.mt-bar-label { font-size: 11px; color: var(--text-secondary); min-width: 160px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mt-bar-track { flex: 1; height: 22px; background: var(--border-light); border-radius: 4px; position: relative; overflow: hidden; }
+.mt-bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding: 0 6px; font-size: 9px; font-weight: 700; color: #fff; white-space: nowrap; min-width: 20px; }
+.mt-bar-month { font-size: 10px; color: var(--text-muted); min-width: 60px; text-align: right; font-family: var(--mono); }
+
+/* Consultant Workload */
+.wl-consultant { margin-bottom: 24px; }
+.wl-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.wl-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--teal); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.wl-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.wl-role { font-size: 11px; color: var(--text-muted); }
+.wl-stats { display: flex; gap: 16px; margin-left: auto; }
+.wl-stat { text-align: center; }
+.wl-stat-val { font-size: 18px; font-weight: 700; font-family: var(--mono); }
+.wl-stat-label { font-size: 10px; color: var(--text-muted); }
+.wl-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius-lg) var(--radius-lg); background: var(--bg-white); padding: 14px 16px; }
+.wl-ws-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border-light); font-size: 12px; }
+.wl-ws-row:last-child { border-bottom: none; }
+.wl-task-row { display: flex; align-items: center; gap: 8px; padding: 5px 0 5px 16px; font-size: 12px; color: var(--text-secondary); }
+
+/* Company Workstream badge */
+.co-ws-badge { padding: 2px 7px; font-size: 9px; font-weight: 700; border-radius: 3px; background: var(--amber-light); color: #92610E; }
+
+/* Filter bar */
+.filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.filter-bar select { max-width: 200px; }
 </style>
 </head>
 <body>
@@ -359,6 +392,8 @@ a:hover { text-decoration: underline; }
       <div class="nav-label">Companies</div>
       <div id="sidebarProjects"></div>
       <div class="nav-label">Tools</div>
+      <div class="nav-item" data-page="master-timeline"><span class="ni-icon">&#9776;</span> Master Timeline</div>
+      <div class="nav-item" data-page="workload"><span class="ni-icon">&#9638;</span> Consultant Workload</div>
       <div class="nav-item" data-page="fda-research"><span class="ni-icon">&#9906;</span> FDA Research</div>
       <div class="nav-item" data-page="templates"><span class="ni-icon">&#9881;</span> Templates</div>
       <div class="nav-label">Settings</div>
@@ -478,6 +513,30 @@ a:hover { text-decoration: underline; }
         <div class="grid-2" id="templatesGrid"></div>
       </div>
 
+      <!-- MASTER TIMELINE -->
+      <div class="page" id="page-master-timeline">
+        <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+          <div><div class="section-title">Master Timeline</div><div class="section-subtitle">Combined milestone view across all workstreams</div></div>
+          <div class="filter-bar">
+            <label class="form-label" style="margin:0;white-space:nowrap">Filter by company:</label>
+            <select class="form-select" id="mtCompanyFilter" style="max-width:200px" onchange="renderMasterTimeline()"><option value="">All Companies</option></select>
+          </div>
+        </div>
+        <div id="masterTimelineContainer"></div>
+      </div>
+
+      <!-- CONSULTANT WORKLOAD -->
+      <div class="page" id="page-workload">
+        <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+          <div><div class="section-title">Consultant Workload</div><div class="section-subtitle">Active assignments, tasks due, and milestones per consultant</div></div>
+          <div class="filter-bar">
+            <label class="form-label" style="margin:0;white-space:nowrap">Filter:</label>
+            <select class="form-select" id="wlFilter" style="max-width:200px" onchange="renderWorkload()"><option value="">All Consultants</option></select>
+          </div>
+        </div>
+        <div id="workloadContainer"></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -488,9 +547,14 @@ a:hover { text-decoration: underline; }
     <div class="modal-header"><h3>New Project</h3><button class="modal-close" onclick="closeModal('newProjectModal')">&#10005;</button></div>
     <div class="modal-body">
       <div class="form-group"><label class="form-label">Company Name</label><input class="form-input" id="npCompany" placeholder="e.g. Acuity Medical"></div>
-      <div class="form-group"><label class="form-label">Device / Product Name</label><input class="form-input" id="npDevice" placeholder="e.g. CardioWatch Pro"></div>
+      <div class="form-group"><label class="form-label">Device / Product Name</label><input class="form-input" id="npDevice" placeholder="e.g. CardioWatch Pro (leave blank for company-level)"></div>
       <div class="form-group"><label class="form-label">Workstream Type</label>
         <select class="form-select" id="npWorkstream"><option value="510(k)">510(k) Clearance</option><option value="PMA">PMA Approval</option><option value="De Novo">De Novo Classification</option><option value="EU MDR">EU MDR Compliance</option><option value="QMS">QMS Creation / Maintenance</option><option value="Clinical">Clinical Trial</option><option value="Custom">Custom Workstream</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="npCompanyLevel" style="width:auto" onchange="document.getElementById('npDevice').disabled=this.checked;if(this.checked)document.getElementById('npDevice').value='Company-Level'"> Company-level workstream (applies to entire company, not a specific product)
+        </label>
       </div>
       <div class="form-group"><label class="form-label">Assigned Consultant</label><input class="form-input" id="npConsultant" placeholder="e.g. Alex Johnson"></div>
     </div>
@@ -627,10 +691,10 @@ function navigateTo(page,projectIdx,companyName){
   S.currentPage=page;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   if(page==='workstream'&&projectIdx!==undefined){S.currentProject=projectIdx;S.currentTab='roadmap';document.getElementById('page-workstream').classList.add('active');document.getElementById('tabbar').style.display='flex';setActiveTab('roadmap');updateBreadcrumb();renderWorkstream()}
   else if(page==='company'&&companyName){S.currentCompany=companyName;S.currentProject=null;document.getElementById('page-company').classList.add('active');document.getElementById('tabbar').style.display='none';updateBreadcrumb();renderCompanyDash(companyName)}
-  else{S.currentProject=null;S.currentCompany=null;const el=document.getElementById(`page-${page}`);if(el)el.classList.add('active');document.getElementById('tabbar').style.display='none';updateBreadcrumb();if(page==='dashboard')renderDashboard();if(page==='templates')renderTemplates();if(page==='fda-research')renderFdaResearch()}
+  else{S.currentProject=null;S.currentCompany=null;const el=document.getElementById(`page-${page}`);if(el)el.classList.add('active');document.getElementById('tabbar').style.display='none';updateBreadcrumb();if(page==='dashboard')renderDashboard();if(page==='templates')renderTemplates();if(page==='fda-research')renderFdaResearch();if(page==='master-timeline')renderMasterTimeline();if(page==='workload')renderWorkload()}
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));const ni=document.querySelector(`.nav-item[data-page="${page}"]`);if(ni)ni.classList.add('active')
 }
-function updateBreadcrumb(){const bc=document.getElementById('breadcrumb');if(S.currentProject!==null&&S.projects[S.currentProject]){const p=S.projects[S.currentProject];bc.innerHTML=`<span class="breadcrumb-item" onclick="navigateTo('dashboard')">Dashboard</span><span class="breadcrumb-sep">&#9656;</span><span class="breadcrumb-item" onclick="navigateTo('company',null,'${esc(p.company)}')">${esc(p.company)}</span><span class="breadcrumb-sep">&#9656;</span><span class="breadcrumb-current">${esc(p.device)} &mdash; ${esc(p.workstream)}</span>`}else if(S.currentCompany){bc.innerHTML=`<span class="breadcrumb-item" onclick="navigateTo('dashboard')">Dashboard</span><span class="breadcrumb-sep">&#9656;</span><span class="breadcrumb-current">${esc(S.currentCompany)}</span>`}else{bc.innerHTML=`<span class="breadcrumb-current">${S.currentPage==='dashboard'?'Dashboard':S.currentPage==='templates'?'Templates':S.currentPage==='fda-research'?'FDA Research':'Settings'}</span>`}}
+function updateBreadcrumb(){const bc=document.getElementById('breadcrumb');if(S.currentProject!==null&&S.projects[S.currentProject]){const p=S.projects[S.currentProject];bc.innerHTML=`<span class="breadcrumb-item" onclick="navigateTo('dashboard')">Dashboard</span><span class="breadcrumb-sep">&#9656;</span><span class="breadcrumb-item" onclick="navigateTo('company',null,'${esc(p.company)}')">${esc(p.company)}</span><span class="breadcrumb-sep">&#9656;</span><span class="breadcrumb-current">${esc(p.device)} &mdash; ${esc(p.workstream)}</span>`}else if(S.currentCompany){bc.innerHTML=`<span class="breadcrumb-item" onclick="navigateTo('dashboard')">Dashboard</span><span class="breadcrumb-sep">&#9656;</span><span class="breadcrumb-current">${esc(S.currentCompany)}</span>`}else{bc.innerHTML=`<span class="breadcrumb-current">${S.currentPage==='dashboard'?'Dashboard':S.currentPage==='templates'?'Templates':S.currentPage==='fda-research'?'FDA Research':S.currentPage==='master-timeline'?'Master Timeline':S.currentPage==='workload'?'Consultant Workload':'Settings'}</span>`}}
 document.querySelectorAll('.nav-item[data-page]').forEach(i=>{i.addEventListener('click',()=>navigateTo(i.dataset.page))});
 document.querySelectorAll('.tab-item[data-tab]').forEach(t=>{t.addEventListener('click',()=>setActiveTab(t.dataset.tab))});
 function setActiveTab(n){S.currentTab=n;document.querySelectorAll('.tab-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===n));document.querySelectorAll('.tab-page').forEach(p=>p.style.display='none');const p=document.getElementById(`tab-${n}`);if(p)p.style.display='block';renderWorkstream()}
@@ -639,13 +703,16 @@ function setActiveTab(n){S.currentTab=n;document.querySelectorAll('.tab-item').f
 function renderSidebarProjects(){
   const el=document.getElementById('sidebarProjects');if(!S.projects.length){el.innerHTML='<div style="padding:6px 12px;font-size:11px;color:var(--text-sidebar-muted)">No projects yet</div>';return}
   const companies={};S.projects.forEach((p,i)=>{if(!companies[p.company])companies[p.company]=[];companies[p.company].push({...p,idx:i})});
-  el.innerHTML=Object.entries(companies).map(([comp,projs])=>`
+  el.innerHTML=Object.entries(companies).map(([comp,projs])=>{
+    const productWs=projs.filter(p=>!p.companyLevel);
+    const companyWs=projs.filter(p=>p.companyLevel);
+    return`
     <div class="nav-expand" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="arrow">&#9656;</span> ${esc(comp)}</div>
     <div class="nav-tree-children">
       <div class="nav-item" onclick="navigateTo('company',null,'${esc(comp)}')" style="padding-left:20px;font-size:11px;color:var(--text-sidebar-muted)"><span class="ni-icon" style="font-size:8px">&#9632;</span> Overview</div>
-      ${projs.map(p=>`<div class="nav-item" onclick="navigateTo('workstream',${p.idx})" style="padding-left:24px"><span class="ni-icon" style="font-size:8px">&#9679;</span> ${esc(p.device)} &mdash; ${esc(p.workstream)}</div>`).join('')}
-    </div>
-  `).join('')
+      ${productWs.length?productWs.map(p=>`<div class="nav-item" onclick="navigateTo('workstream',${p.idx})" style="padding-left:24px"><span class="ni-icon" style="font-size:8px">&#9679;</span> ${esc(p.device)} &mdash; ${esc(p.workstream)}</div>`).join(''):''}
+      ${companyWs.length?`<div style="padding:4px 10px 2px 20px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-sidebar-muted)">Company Workstreams</div>${companyWs.map(p=>`<div class="nav-item" onclick="navigateTo('workstream',${p.idx})" style="padding-left:28px"><span class="ni-icon" style="font-size:7px;color:var(--amber)">&#9670;</span> ${esc(p.workstream)}</div>`).join('')}`:''}
+    </div>`}).join('')
 }
 
 // COMPANY DASHBOARD
@@ -673,7 +740,7 @@ function renderCompanyDash(companyName){
 }
 
 // CREATE PROJECT
-function createProject(){const company=document.getElementById('npCompany').value.trim(),device=document.getElementById('npDevice').value.trim(),ws=document.getElementById('npWorkstream').value,consultant=document.getElementById('npConsultant').value.trim();if(!company||!device){toast('Company and device name required','error');return}const template=TEMPLATES.find(t=>t.type===ws);const project={id:uid(),company,device,workstream:ws,consultant:consultant||'Unassigned',status:'Active',created:today(),roadmap:template?JSON.parse(JSON.stringify(template.roadmap)):[],checklist:template?JSON.parse(JSON.stringify(template.checklist)):[],timeline:template?JSON.parse(JSON.stringify(template.timeline)):[],documents:[],notes:[],actions:[],deviceSetup:{name:device,productCode:'',classification:'Class II - Moderate Risk',pathway:ws,intendedUse:'',characteristics:{containsSoftware:false,cybersecurity:false,sterile:false,implantable:false,electricallyPowered:false,reusable:false,predicateKnown:false,qsubRequired:false},patientContact:{type:'No Patient Contact',duration:'Limited (<24 hrs)'}}};S.projects.push(project);saveState();refreshAll();closeModal('newProjectModal');document.getElementById('npCompany').value='';document.getElementById('npDevice').value='';toast('Project created','success');navigateTo('workstream',S.projects.length-1)}
+function createProject(){const company=document.getElementById('npCompany').value.trim(),device=document.getElementById('npDevice').value.trim(),ws=document.getElementById('npWorkstream').value,consultant=document.getElementById('npConsultant').value.trim(),isCompanyLevel=document.getElementById('npCompanyLevel').checked;if(!company){toast('Company name required','error');return}if(!device&&!isCompanyLevel){toast('Device name required (or check company-level)','error');return}const template=TEMPLATES.find(t=>t.type===ws);const project={id:uid(),company,device:isCompanyLevel?'Company-Level':device,workstream:ws,consultant:consultant||'Unassigned',status:'Active',created:today(),companyLevel:isCompanyLevel,roadmap:template?JSON.parse(JSON.stringify(template.roadmap)):[],checklist:template?JSON.parse(JSON.stringify(template.checklist)):[],timeline:template?JSON.parse(JSON.stringify(template.timeline)):[],documents:[],notes:[],actions:[],deviceSetup:{name:isCompanyLevel?company:device,productCode:'',classification:'Class II - Moderate Risk',pathway:ws,intendedUse:'',characteristics:{containsSoftware:false,cybersecurity:false,sterile:false,implantable:false,electricallyPowered:false,reusable:false,predicateKnown:false,qsubRequired:false},patientContact:{type:'No Patient Contact',duration:'Limited (<24 hrs)'}}};S.projects.push(project);saveState();refreshAll();closeModal('newProjectModal');document.getElementById('npCompany').value='';document.getElementById('npDevice').value='';document.getElementById('npDevice').disabled=false;document.getElementById('npCompanyLevel').checked=false;toast('Project created','success');navigateTo('workstream',S.projects.length-1)}
 
 // DASHBOARD
 function renderDashboard(){document.getElementById('dStatProjects').textContent=S.projects.length;let ta=0,tm=0,tb=0;S.projects.forEach(p=>{ta+=p.actions.filter(a=>a.status!=='Complete').length;p.roadmap.forEach(ph=>{tm+=ph.tasks.filter(t=>t.status!=='Complete').length;tb+=ph.tasks.filter(t=>t.status==='Blocked').length});tb+=p.actions.filter(a=>a.status==='Blocked').length});document.getElementById('dStatActions').textContent=ta;document.getElementById('dStatMilestones').textContent=tm;document.getElementById('dStatBlocked').textContent=tb;document.getElementById('actionBadge').textContent=ta;
@@ -809,7 +876,54 @@ timeline:[{name:'Study Design',desc:'Protocol development, sample size, SAP.',mo
 function renderTemplates(){document.getElementById('templatesGrid').innerHTML=TEMPLATES.map((t,i)=>`<div class="card" style="cursor:pointer;border-top:3px solid ${t.color}" onclick="applyTemplate(${i})"><div class="card-body"><div style="font-size:15px;font-weight:700;margin-bottom:4px">${esc(t.name)}</div><div style="font-size:12px;color:var(--text-muted);line-height:1.4">${esc(t.desc)}</div><div style="margin-top:10px;font-size:11px;color:var(--text-muted)">${t.roadmap.length} phases &middot; ${t.roadmap.reduce((a,p)=>a+p.tasks.length,0)} tasks</div></div></div>`).join('')}
 function applyTemplate(i){document.getElementById('npWorkstream').value=TEMPLATES[i].type;openModal('newProjectModal');toast(`Selected ${TEMPLATES[i].name} template.`,'info')}
 
-function refreshAll(){renderSidebarProjects();renderDashboard();renderTemplates();if(S.currentProject!==null)renderWorkstream();if(S.currentPage==='fda-research')renderFdaResearch()}
+function refreshAll(){renderSidebarProjects();renderDashboard();renderTemplates();if(S.currentProject!==null)renderWorkstream();if(S.currentPage==='fda-research')renderFdaResearch();if(S.currentPage==='master-timeline')renderMasterTimeline();if(S.currentPage==='workload')renderWorkload()}
+
+// MASTER TIMELINE
+function renderMasterTimeline(){
+  const filterSel=document.getElementById('mtCompanyFilter');
+  const cos=[...new Set(S.projects.map(p=>p.company))];
+  const curVal=filterSel.value;
+  filterSel.innerHTML='<option value="">All Companies</option>'+cos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  filterSel.value=curVal;
+  const filtered=curVal?S.projects.filter(p=>p.company===curVal):S.projects;
+  const el=document.getElementById('masterTimelineContainer');
+  if(!filtered.length){el.innerHTML='<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">No projects to display</div><div class="empty-desc">Create projects to see their timelines here.</div></div></div></div>';return}
+  // Group by company
+  const companies={};filtered.forEach(p=>{if(!companies[p.company])companies[p.company]=[];companies[p.company].push(p)});
+  el.innerHTML=Object.entries(companies).map(([comp,projs])=>{
+    return`<div class="card" style="margin-bottom:20px"><div class="card-header"><div class="card-title">${esc(comp)}</div><span class="badge badge-teal">${projs.length} workstream${projs.length!==1?'s':''}</span></div><div class="card-body">${projs.map(p=>{
+      if(!p.timeline.length)return'';
+      const label=p.companyLevel?p.workstream:`${p.device} — ${p.workstream}`;
+      return`<div class="mt-lane"><div class="mt-lane-header"><div class="mt-lane-title">${esc(label)}</div><div class="mt-lane-sub">${esc(p.consultant)}</div></div>${p.timeline.map(t=>{
+        const pct=t.status==='Complete'?100:t.status==='In Progress'||t.status==='Active'?50:0;
+        const color=t.status==='Complete'?'var(--green)':t.status==='In Progress'||t.status==='Active'?'var(--teal)':'#CBD5E0';
+        return`<div class="mt-bar-row"><div class="mt-bar-label" title="${esc(t.name)}">${esc(t.name)}</div><div class="mt-bar-track"><div class="mt-bar-fill" style="width:${Math.max(pct,8)}%;background:${color}">${pct>0?t.status:''}</div></div><div class="mt-bar-month">${esc(t.month||'')}</div></div>`
+      }).join('')}</div>`}).join('')}</div></div>`
+  }).join('')
+}
+
+// CONSULTANT WORKLOAD
+function renderWorkload(){
+  const filterSel=document.getElementById('wlFilter');
+  const consultants=[...new Set(S.projects.map(p=>p.consultant).filter(c=>c&&c!=='Unassigned'))];
+  const curVal=filterSel.value;
+  filterSel.innerHTML='<option value="">All Consultants</option>'+consultants.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  filterSel.value=curVal;
+  const filtered=curVal?consultants.filter(c=>c===curVal):consultants;
+  const el=document.getElementById('workloadContainer');
+  if(!filtered.length&&!S.projects.length){el.innerHTML='<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">No consultants assigned</div><div class="empty-desc">Assign consultants to projects to see workload here.</div></div></div></div>';return}
+  if(!filtered.length){el.innerHTML='<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">No matching consultants</div></div></div></div>';return}
+  el.innerHTML=filtered.map(consultant=>{
+    const projs=S.projects.filter(p=>p.consultant===consultant);
+    const totalTasks=projs.reduce((a,p)=>a+p.roadmap.reduce((b,ph)=>b+ph.tasks.length,0),0);
+    const doneTasks=projs.reduce((a,p)=>a+p.roadmap.reduce((b,ph)=>b+ph.tasks.filter(t=>t.status==='Complete').length,0),0);
+    const openActions=projs.reduce((a,p)=>a+p.actions.filter(ac=>ac.status!=='Complete').length,0);
+    const blockedItems=projs.reduce((a,p)=>{let b=p.actions.filter(ac=>ac.status==='Blocked').length;p.roadmap.forEach(ph=>{b+=ph.tasks.filter(t=>t.status==='Blocked').length});return a+b},0);
+    // Get upcoming tasks (not complete, across all projects)
+    const upcomingTasks=[];projs.forEach(p=>{p.roadmap.forEach(ph=>{ph.tasks.filter(t=>t.status!=='Complete').slice(0,3).forEach(t=>{upcomingTasks.push({task:t.name,status:t.status,project:`${p.companyLevel?p.company+' — ':p.device+' — '}${p.workstream}`,pIdx:S.projects.indexOf(p)})})});p.actions.filter(a=>a.status!=='Complete').forEach(a=>{upcomingTasks.push({task:a.title,status:a.status,project:`${p.companyLevel?p.company+' — ':p.device+' — '}${p.workstream}`,pIdx:S.projects.indexOf(p)})})});
+    return`<div class="wl-consultant"><div class="wl-header"><div class="wl-avatar">${consultant.charAt(0).toUpperCase()}</div><div><div class="wl-name">${esc(consultant)}</div><div class="wl-role">Consultant</div></div><div class="wl-stats"><div class="wl-stat"><div class="wl-stat-val" style="color:var(--teal)">${projs.length}</div><div class="wl-stat-label">Workstreams</div></div><div class="wl-stat"><div class="wl-stat-val">${doneTasks}/${totalTasks}</div><div class="wl-stat-label">Tasks Done</div></div><div class="wl-stat"><div class="wl-stat-val" style="color:var(--amber)">${openActions}</div><div class="wl-stat-label">Actions</div></div><div class="wl-stat"><div class="wl-stat-val" style="color:var(--red)">${blockedItems}</div><div class="wl-stat-label">Blocked</div></div></div></div><div class="wl-body"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:6px">Active Workstreams</div>${projs.map(p=>{const tt=p.roadmap.reduce((a,ph)=>a+ph.tasks.length,0),dt=p.roadmap.reduce((a,ph)=>a+ph.tasks.filter(t=>t.status==='Complete').length,0),pc=tt?Math.round((dt/tt)*100):0;return`<div class="wl-ws-row" style="cursor:pointer" onclick="navigateTo('workstream',${S.projects.indexOf(p)})"><div style="flex:1;font-weight:500">${esc(p.company)} &mdash; ${p.companyLevel?esc(p.workstream):esc(p.device)+' &mdash; '+esc(p.workstream)}</div>${p.companyLevel?'<span class="co-ws-badge">Company</span>':''}<div style="font-family:var(--mono);font-weight:700;color:var(--teal);min-width:40px;text-align:right">${pc}%</div>${statusTag(p.status)}</div>`}).join('')}<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin:12px 0 6px">Upcoming Tasks & Actions</div>${upcomingTasks.slice(0,10).map(t=>`<div class="wl-task-row"><div style="flex:1">${esc(t.task)}</div><div style="font-size:10px;color:var(--text-muted)">${esc(t.project)}</div>${statusTag(t.status)}</div>`).join('')}${upcomingTasks.length===0?'<div style="font-size:12px;color:var(--text-muted);padding:8px 0">No upcoming tasks</div>':''}</div></div>`
+  }).join('')
+}
 
 document.getElementById('loginBtn').addEventListener('click',handleLogin);
 document.getElementById('loginEmail').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginPassword').focus()});
