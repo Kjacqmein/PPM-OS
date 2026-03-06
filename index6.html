@@ -547,7 +547,7 @@ a:hover { text-decoration: underline; }
       <div class="form-group"><label class="form-label">Company Name</label><input class="form-input" id="npCompany" placeholder="e.g. Acuity Medical"></div>
       <div class="form-group"><label class="form-label">Device / Product Name</label><input class="form-input" id="npDevice" placeholder="e.g. CardioWatch Pro (leave blank for company-level)"></div>
       <div class="form-group"><label class="form-label">Workstream Type</label>
-        <select class="form-select" id="npWorkstream"><option value="510(k)">510(k) Clearance</option><option value="PMA">PMA Approval</option><option value="De Novo">De Novo Classification</option><option value="EU MDR">EU MDR Compliance</option><option value="QMS">QMS Creation / Maintenance</option><option value="Clinical">Clinical Trial</option><option value="Custom">Custom Workstream</option></select>
+        <select class="form-select" id="npWorkstream"><option value="510(k)">510(k) Clearance</option><option value="PMA">PMA Approval</option><option value="De Novo">De Novo Classification</option><option value="EU MDR">EU MDR Compliance</option><option value="QMS">QMS Creation / Maintenance</option><option value="PDP">Product Development Process</option><option value="Clinical">Clinical Trial</option><option value="Custom">Custom Workstream</option></select>
       </div>
       <div class="form-group">
         <label class="form-label" style="display:flex;align-items:center;gap:8px">
@@ -917,7 +917,7 @@ roadmap:[
 {name:'Design & Production Controls',desc:'Design control, production, and purchasing procedures',duration:'6-12 wks',color:'#805AD5',tasks:[{name:'Design Control Procedure',desc:'SOP per 21 CFR 820.30 / ISO 13485 clause 7.3.',type:'doc',status:'Not Started'},{name:'Risk Management Procedure',desc:'Risk management process per ISO 14971.',type:'doc',status:'Not Started'},{name:'Production Controls',desc:'Manufacturing process controls and work instructions.',type:'doc',status:'Not Started'},{name:'Purchasing Controls',desc:'Purchasing and incoming inspection procedures.',type:'doc',status:'Not Started'}]},
 {name:'Validation & Audit Readiness',desc:'Validate QMS and prepare for certification audit',duration:'4-8 wks',color:'#38A169',tasks:[{name:'Process Validation',desc:'Validate key manufacturing and quality processes.',type:'test',status:'Not Started'},{name:'Internal Audit Execution',desc:'Conduct comprehensive internal audit of QMS.',type:'review',status:'Not Started'},{name:'Management Review',desc:'Conduct first formal management review.',type:'review',status:'Not Started'},{name:'Certification Audit Preparation',desc:'Prepare for ISO 13485 certification audit.',type:'plan',status:'Not Started'}]}
 ],
-checklist:[{section:'QUALITY SYSTEM',items:[{name:'Quality Manual',desc:'Quality management system manual',req:'required',checked:false},{name:'Quality Policy',desc:'Documented quality policy',req:'required',checked:false},{name:'Quality Objectives',desc:'Measurable quality objectives',req:'required',checked:false}]},{section:'PROCEDURES',items:[{name:'Document Control SOP',desc:'Document creation, review, approval process',req:'required',checked:false},{name:'CAPA SOP',desc:'Corrective and preventive action process',req:'required',checked:false},{name:'Internal Audit SOP',desc:'Audit planning and execution process',req:'required',checked:false},{name:'Management Review SOP',desc:'Periodic management review process',req:'required',checked:false},{name:'Complaint Handling SOP',desc:'Complaint investigation process',req:'required',checked:false},{name:'Training SOP',desc:'Training management process',req:'required',checked:false}]},{section:'DESIGN & PRODUCTION',items:[{name:'Design Control SOP',desc:'Design and development control process',req:'required',checked:false},{name:'Risk Management SOP',desc:'Risk management per ISO 14971',req:'required',checked:false}]}],
+checklist:[{section:'QUALITY SYSTEM',items:[{name:'Quality Manual',desc:'Quality management system manual',req:'required',checked:false},{name:'Quality Policy',desc:'Documented quality policy',req:'required',checked:false},{name:'Quality Objectives',desc:'Measurable quality objectives',req:'required',checked:false}]},{section:'SOP BATCH 1 - DESIGN & RISK',items:[{name:'SOP-318 Risk Management Procedure',desc:'Risk management per ISO 14971',req:'required',checked:false},{name:'SOP-700 Product Realization Plan',desc:'Product realization planning process',req:'required',checked:false},{name:'SOP-730 Design Control Procedure',desc:'Design control per 21 CFR 820.30',req:'required',checked:false},{name:'SOP-739 Design Control Change Procedure',desc:'Design change management process',req:'required',checked:false},{name:'SOP-740 Purchasing and Supplier Management',desc:'Supplier qualification and purchasing controls',req:'required',checked:false}]},{section:'SOP BATCH 2 - PRODUCTION',items:[{name:'SOP-826 Manufacturing/Software Procedure',desc:'Manufacturing and software development process',req:'required',checked:false},{name:'SOP-630 Facility and Infrastructure Procedure',desc:'Facility and infrastructure management',req:'required',checked:false},{name:'SOP-720 Customer Ordering Procedure',desc:'Customer order management process',req:'required',checked:false},{name:'SOP-756 Validation of Processes for Production',desc:'Process validation methodology',req:'required',checked:false},{name:'SOP-760 Calibration and Maintenance Procedure',desc:'Equipment calibration and maintenance',req:'required',checked:false}]},{section:'SOP BATCH 3 - DOCUMENTS & HR',items:[{name:'SOP-420 Document Change and Record Management',desc:'Document control and records management',req:'required',checked:false},{name:'SOP-410 Regulatory Procedure',desc:'Regulatory affairs process',req:'required',checked:false},{name:'SOP-860 Regulatory Inspection Procedure',desc:'Handling regulatory inspections',req:'required',checked:false},{name:'SOP-620 Human Resources Procedure',desc:'HR management process',req:'required',checked:false},{name:'SOP-622 Training Management',desc:'Training needs, execution, and records',req:'required',checked:false},{name:'SOP-500 Quality Manual',desc:'Quality manual document',req:'required',checked:false}]},{section:'SOP BATCH 4 - CORRECTIVE ACTIONS',items:[{name:'SOP-822 Complaint Handling Procedure',desc:'Customer complaint management',req:'required',checked:false},{name:'SOP-823 Medical Device Reporting',desc:'MDR/adverse event reporting',req:'required',checked:false},{name:'SOP-833 Field Corrective Action',desc:'Field safety corrective action process',req:'required',checked:false},{name:'SOP-850 CAPA Procedure',desc:'Corrective and Preventive Action',req:'required',checked:false},{name:'SOP-824 Internal Audit Procedure',desc:'Internal audit planning and execution',req:'required',checked:false},{name:'SOP-560 Management Review',desc:'Management review process',req:'required',checked:false},{name:'SOP-830 Non-conformance Management',desc:'Non-conforming product management',req:'required',checked:false}]},{section:'SOP BATCH 5 - OPERATIONS',items:[{name:'SOP-751 Handling, Storage, Distribution, Labeling',desc:'Product handling and distribution',req:'required',checked:false},{name:'SOP-759 Return of Materials Procedure',desc:'Material returns process',req:'required',checked:false},{name:'SOP-840 Statistical Techniques',desc:'Statistical analysis methods',req:'optional',checked:false},{name:'SOP-752 Cleanliness of Product Procedure',desc:'Product cleanliness requirements',req:'optional',checked:false},{name:'SOP-758 Product Identification and Traceability',desc:'Product identification and traceability system',req:'required',checked:false},{name:'SOP-825 Monitoring and Measurement of Process',desc:'Process monitoring and measurement',req:'required',checked:false},{name:'SOP-900 Clinical Evaluation Report Procedure',desc:'CER development process',req:'optional',checked:false}]},{section:'SUPPLIER DOCUMENTS',items:[{name:'SCAR Form (F-740)',desc:'Supplier Corrective Action Request form',req:'required',checked:false},{name:'Supplier Risk Assessment (F-741)',desc:'Risk assessment for each supplier',req:'required',checked:false},{name:'Supplier Quality Agreement (F-742)',desc:'Quality agreements with suppliers',req:'required',checked:false},{name:'Receiving Inspection Form (F-743)',desc:'Incoming inspection form',req:'required',checked:false},{name:'Purchase Order Form (F-744)',desc:'Standard purchase order template',req:'required',checked:false},{name:'Approved Vendor Log (LOG-740)',desc:'Log of approved vendors',req:'required',checked:false},{name:'SCAR Log (LOG-741)',desc:'Log of supplier corrective actions',req:'required',checked:false}]},{section:'HR DOCUMENTS',items:[{name:'Org Chart (LOG-622)',desc:'Current organizational chart',req:'required',checked:false},{name:'Job Descriptions',desc:'Job descriptions for all relevant roles',req:'required',checked:false},{name:'Training Records',desc:'Completed training records for all staff',req:'required',checked:false}]},{section:'OPERATIONS',items:[{name:'Equipment Log (LOG-760)',desc:'Equipment inventory log',req:'required',checked:false},{name:'Calibration & Maintenance Records (F-761)',desc:'Equipment calibration and maintenance records',req:'required',checked:false},{name:'Calibration & Maintenance WIs',desc:'Work instructions for calibration/maintenance',req:'required',checked:false},{name:'Bill of Materials (F-751)',desc:'Complete BOM',req:'required',checked:false}]},{section:'QUALITY DOCUMENTS',items:[{name:'CAPA Form (F-850)',desc:'Corrective and Preventive Action form',req:'required',checked:false},{name:'CAPA Log (LOG-850)',desc:'CAPA tracking log',req:'required',checked:false},{name:'Complaint Form (F-822)',desc:'Customer complaint form',req:'required',checked:false},{name:'Complaint Log (LOG-822)',desc:'Complaint tracking log',req:'required',checked:false},{name:'NCR Form (F-830)',desc:'Non-Conformance Report form',req:'required',checked:false},{name:'NCR Log (LOG-830)',desc:'NCR tracking log',req:'required',checked:false},{name:'Management Review Plan',desc:'Management review schedule and plan',req:'required',checked:false},{name:'Initial Quality Objectives',desc:'Defined quality objectives',req:'required',checked:false},{name:'Internal Audit Schedule',desc:'Internal audit schedule',req:'required',checked:false}]}],
 timeline:[{name:'Planning & Gap Assessment',desc:'Current state evaluation, requirements mapping, implementation plan.',month:'Month 1',status:'Not Started',tags:['Assessment','Plan']},{name:'Core Procedures',desc:'Develop all core QMS procedures and forms.',month:'Month 2-5',status:'Not Started',tags:['SOPs','Forms','Templates']},{name:'Design & Production Controls',desc:'Design control, risk management, production procedures.',month:'Month 4-7',status:'Not Started',tags:['Design Control','Risk Mgmt']},{name:'Validation & Audit',desc:'Process validation, internal audit, management review.',month:'Month 7-9',status:'Not Started',tags:['Validation','Internal Audit']},{name:'Certification',desc:'ISO 13485 certification audit.',month:'Month 9-12',status:'Not Started',tags:['Cert Audit','ISO 13485']}]},
 // Clinical
 {type:'Clinical',name:'Clinical Trial',desc:'IDE clinical trial planning and execution',color:'var(--blue)',
@@ -928,7 +928,134 @@ roadmap:[
 {name:'Study Close-Out & Reporting',desc:'Close study, analyze data, prepare reports',duration:'8-16 wks',color:'#D69E2E',tasks:[{name:'Database Lock',desc:'Finalize and lock clinical database.',type:'review',status:'Not Started'},{name:'Statistical Analysis',desc:'Execute statistical analysis per SAP.',type:'doc',status:'Not Started'},{name:'Clinical Study Report',desc:'Prepare ICH E3 compliant clinical study report.',type:'doc',status:'Not Started'},{name:'Site Close-Out',desc:'Conduct close-out visits at all sites.',type:'review',status:'Not Started'}]}
 ],
 checklist:[{section:'PROTOCOL',items:[{name:'Clinical Protocol',desc:'Final approved clinical study protocol',req:'required',checked:false},{name:'Statistical Analysis Plan',desc:'Pre-specified SAP',req:'required',checked:false},{name:'Case Report Forms',desc:'Validated CRFs',req:'required',checked:false}]},{section:'REGULATORY',items:[{name:'IDE Application',desc:'FDA IDE application (if applicable)',req:'optional',checked:false},{name:'IRB Approval',desc:'Ethics committee approval',req:'required',checked:false},{name:'Informed Consent',desc:'IRB-approved ICF',req:'required',checked:false}]},{section:'REPORTING',items:[{name:'Clinical Study Report',desc:'ICH E3 compliant CSR',req:'required',checked:false},{name:'Adverse Event Summary',desc:'Complete AE tabulation',req:'required',checked:false}]}],
-timeline:[{name:'Study Design',desc:'Protocol development, sample size, SAP.',month:'Month 1-3',status:'Not Started',tags:['Protocol','SAP']},{name:'Regulatory Approvals',desc:'IDE submission, IRB approval, site agreements.',month:'Month 3-6',status:'Not Started',tags:['IDE','IRB','Sites']},{name:'Enrollment',desc:'Site activation, patient screening and enrollment.',month:'Month 6-18',status:'Not Started',tags:['SIVs','Enrollment']},{name:'Follow-Up & Monitoring',desc:'Patient follow-up, monitoring, safety review.',month:'Month 12-24',status:'Not Started',tags:['Monitoring','Safety']},{name:'Close-Out & Reporting',desc:'Database lock, analysis, CSR preparation.',month:'Month 24-28',status:'Not Started',tags:['DB Lock','CSR']}]}
+timeline:[{name:'Study Design',desc:'Protocol development, sample size, SAP.',month:'Month 1-3',status:'Not Started',tags:['Protocol','SAP']},{name:'Regulatory Approvals',desc:'IDE submission, IRB approval, site agreements.',month:'Month 3-6',status:'Not Started',tags:['IDE','IRB','Sites']},{name:'Enrollment',desc:'Site activation, patient screening and enrollment.',month:'Month 6-18',status:'Not Started',tags:['SIVs','Enrollment']},{name:'Follow-Up & Monitoring',desc:'Patient follow-up, monitoring, safety review.',month:'Month 12-24',status:'Not Started',tags:['Monitoring','Safety']},{name:'Close-Out & Reporting',desc:'Database lock, analysis, CSR preparation.',month:'Month 24-28',status:'Not Started',tags:['DB Lock','CSR']}]},
+// PDP (Product Development Process)
+{type:'PDP',name:'Product Development Process',desc:'Full product development lifecycle per 21 CFR 820.30 design controls',color:'var(--orange)',
+roadmap:[
+{name:'Planning & Product Realization',desc:'Establish product realization plan, gather customer requirements, and define strategy',duration:'4-8 wks',month:'Month 1-2',color:'#DD6B20',tasks:[
+{name:'Product Realization Plan',desc:'Develop comprehensive product realization plan per design controls.',type:'plan',status:'Not Started'},
+{name:'Customer Requirements / User Input',desc:'Gather and document customer needs, user requirements, and market input.',type:'plan',status:'Not Started'},
+{name:'Literature Review',desc:'Review relevant literature, standards, and existing device landscape.',type:'review',status:'Not Started'},
+{name:'Marketing Plan',desc:'Develop initial marketing strategy and commercial positioning.',type:'plan',status:'Not Started'},
+{name:'Regulatory Plan',desc:'Define regulatory pathway and submission strategy.',type:'plan',status:'Not Started'},
+{name:'Clinical Plan',desc:'Outline clinical evidence strategy and study requirements.',type:'plan',status:'Not Started'},
+{name:'Patent / Trademark Review',desc:'Review IP landscape, file patent and trademark applications.',type:'review',status:'Not Started'},
+{name:'Initial FMEA / Risk Analysis',desc:'Begin failure mode and effects analysis per ISO 14971.',type:'doc',status:'Not Started'}
+]},
+{name:'Design Input & Concept Development',desc:'Define specifications, develop prototypes, and conduct initial testing',duration:'8-16 wks',month:'Month 2-6',color:'#3182CE',tasks:[
+{name:'User Specifications',desc:'Document user needs and specifications.',type:'doc',status:'Not Started'},
+{name:'Product Specifications',desc:'Translate user needs into measurable product specifications.',type:'doc',status:'Not Started'},
+{name:'Design Concept Prototypes',desc:'Build initial design concept prototypes for evaluation.',type:'plan',status:'Not Started'},
+{name:'Design Concept Testing',desc:'Test prototypes against initial requirements.',type:'test',status:'Not Started'},
+{name:'Packaging and Labeling Plan',desc:'Develop packaging and labeling strategy.',type:'plan',status:'Not Started'},
+{name:'Initial Vendor Plan',desc:'Identify potential suppliers and vendors.',type:'plan',status:'Not Started'},
+{name:'Verification Plan (Draft)',desc:'Draft design verification test plan.',type:'doc',status:'Not Started'},
+{name:'Validation Plan (Draft)',desc:'Draft design validation test plan.',type:'doc',status:'Not Started'},
+{name:'Manufacturing Validation Protocol',desc:'Draft manufacturing validation protocol (IQ/OQ/PQ).',type:'doc',status:'Not Started'},
+{name:'Labeling Validation Protocol',desc:'Draft labeling validation protocol.',type:'doc',status:'Not Started'},
+{name:'Design Review I & II',desc:'Conduct formal design reviews at concept milestones.',type:'review',status:'Not Started'}
+]},
+{name:'Design Output & Verification',desc:'Finalize specifications, conduct verification testing, and complete regulatory prep',duration:'12-24 wks',month:'Month 6-12',color:'#805AD5',tasks:[
+{name:'Final Specifications',desc:'Finalize all design output specifications.',type:'doc',status:'Not Started'},
+{name:'Finalize Design Verification Plan',desc:'Complete and approve verification test plan.',type:'doc',status:'Not Started'},
+{name:'Design Verification Test Report',desc:'Execute verification testing and document results.',type:'test',status:'Not Started'},
+{name:'Biocompatibility Testing',desc:'Conduct biocompatibility testing per ISO 10993.',type:'test',status:'Not Started'},
+{name:'Finalize FMEA / Risk Analysis',desc:'Complete risk analysis with all mitigations documented.',type:'doc',status:'Not Started'},
+{name:'Regulatory Memo',desc:'Prepare regulatory strategy memorandum.',type:'doc',status:'Not Started'},
+{name:'Manufacturing Plan Finalized',desc:'Finalize manufacturing process and work instructions.',type:'plan',status:'Not Started'},
+{name:'Design Builds',desc:'Execute design verification builds.',type:'plan',status:'Not Started'},
+{name:'Physician / Customer Feedback',desc:'Gather clinical user feedback on design outputs.',type:'review',status:'Not Started'},
+{name:'Supplier / Vendor Requirements Defined',desc:'Finalize supplier qualification requirements.',type:'plan',status:'Not Started'},
+{name:'Capital Equipment Needs Defined',desc:'Identify required manufacturing capital equipment.',type:'plan',status:'Not Started'},
+{name:'File Patent(s) / Trademark Applications',desc:'Submit patent and trademark filings.',type:'submit',status:'Not Started'},
+{name:'Design Review III',desc:'Conduct formal design review at verification milestone.',type:'review',status:'Not Started'}
+]},
+{name:'Validation & Design Transfer',desc:'Validate design, scale manufacturing, and transfer to production',duration:'8-16 wks',month:'Month 12-16',color:'#D69E2E',tasks:[
+{name:'Manufacturing Scale Up',desc:'Scale manufacturing process from design to production volumes.',type:'plan',status:'Not Started'},
+{name:'Environmental and Packaging Testing',desc:'Conduct environmental exposure and packaging integrity testing.',type:'test',status:'Not Started'},
+{name:'IQ / OQ / PQ Execution',desc:'Execute Installation, Operational, and Performance Qualification.',type:'test',status:'Not Started'},
+{name:'Manufacturing Validation',desc:'Complete manufacturing process validation.',type:'test',status:'Not Started'},
+{name:'Labeling Validation',desc:'Validate all labeling materials and processes.',type:'test',status:'Not Started'},
+{name:'Production Schedule and Needs Plan',desc:'Develop production schedule and resource plan.',type:'plan',status:'Not Started'},
+{name:'Supplier / Vendor Finalized',desc:'Complete supplier qualification and agreements.',type:'plan',status:'Not Started'},
+{name:'Capital Equipment Finalized',desc:'Procure and qualify all capital equipment.',type:'plan',status:'Not Started'},
+{name:'Update DHF',desc:'Update Design History File with all validation records.',type:'doc',status:'Not Started'},
+{name:'Design Transfer Record',desc:'Document design transfer to manufacturing.',type:'doc',status:'Not Started'},
+{name:'Review Design Outputs for Manufacturing',desc:'Verify design outputs are correctly translated to manufacturing specs.',type:'review',status:'Not Started'},
+{name:'Review Production Capability',desc:'Confirm product requirements can be met in production.',type:'review',status:'Not Started'},
+{name:'Design Review IV',desc:'Conduct final design review at transfer milestone.',type:'review',status:'Not Started'}
+]},
+{name:'Production & Release',desc:'Compile DMR, complete registrations, and release to market',duration:'4-8 wks',month:'Month 16-18',color:'#38A169',tasks:[
+{name:'Device Master Record (DMR)',desc:'Compile complete DMR: User Specs, Product Specs, Final Specs, Labels, IFU, Manufacturing WI, Packaging WI.',type:'doc',status:'Not Started'},
+{name:'Travelers',desc:'Create production travelers and batch records.',type:'doc',status:'Not Started'},
+{name:'Work Instructions',desc:'Finalize all manufacturing and packaging work instructions.',type:'doc',status:'Not Started'},
+{name:'Labeling (Bag & IFU)',desc:'Finalize device labels, bag labels, and Instructions for Use.',type:'doc',status:'Not Started'},
+{name:'GUDID Submission',desc:'Submit device information to FDA GUDID database.',type:'submit',status:'Not Started'},
+{name:'Foreign Agent Submission',desc:'Complete foreign agent submissions for international markets.',type:'submit',status:'Not Started'},
+{name:'Update DMR',desc:'Final review and update of Device Master Record.',type:'doc',status:'Not Started'}
+]}
+],
+checklist:[
+{section:'DEVICE MASTER RECORD',items:[
+{name:'User Specifications',desc:'Documented user needs and specifications',req:'required',checked:false},
+{name:'Product Specifications',desc:'Measurable product specifications',req:'required',checked:false},
+{name:'Final Specifications',desc:'Final approved design output specifications',req:'required',checked:false},
+{name:'Box Labels',desc:'Final approved box/package labels',req:'required',checked:false},
+{name:'Instructions for Use (IFU)',desc:'Complete instructions for use document',req:'required',checked:false},
+{name:'Manufacturing Work Instructions',desc:'All manufacturing WIs',req:'required',checked:false},
+{name:'Packaging Work Instructions',desc:'All packaging WIs',req:'required',checked:false}
+]},
+{section:'DESIGN HISTORY FILE',items:[
+{name:'Product Realization Plan',desc:'Approved product realization plan',req:'required',checked:false},
+{name:'Design Reviews (I-IV)',desc:'All formal design review records',req:'required',checked:false},
+{name:'FMEA / Risk Analysis',desc:'Complete risk analysis document',req:'required',checked:false},
+{name:'Regulatory Memo',desc:'Regulatory strategy memorandum',req:'required',checked:false},
+{name:'Verification Plan & Report',desc:'Design verification plan and test report',req:'required',checked:false},
+{name:'Validation Plan & Report',desc:'Design validation plan and test report',req:'required',checked:false},
+{name:'Design Transfer Record',desc:'Formal design transfer documentation',req:'required',checked:false}
+]},
+{section:'MANUFACTURING & VALIDATION',items:[
+{name:'Manufacturing Validation (IQ/OQ/PQ)',desc:'Complete manufacturing process validation',req:'required',checked:false},
+{name:'Labeling Validation',desc:'Labeling process validation',req:'required',checked:false},
+{name:'Travelers',desc:'Production travelers and batch records',req:'required',checked:false},
+{name:'Bill of Materials (F-751)',desc:'Complete BOM for the device',req:'required',checked:false}
+]},
+{section:'HR DOCUMENTS',items:[
+{name:'Org Chart (LOG-622)',desc:'Current organizational chart',req:'required',checked:false},
+{name:'Job Descriptions',desc:'Job descriptions for all relevant roles',req:'required',checked:false},
+{name:'Training Records',desc:'Completed training records',req:'required',checked:false}
+]},
+{section:'SUPPLIER DOCUMENTS',items:[
+{name:'SCAR Form (F-740)',desc:'Supplier Corrective Action Request form',req:'required',checked:false},
+{name:'Supplier Risk Assessment (F-741)',desc:'Risk assessment for each supplier',req:'required',checked:false},
+{name:'Supplier Quality Agreement (F-742)',desc:'Quality agreements with suppliers',req:'required',checked:false},
+{name:'Receiving Inspection Form (F-743)',desc:'Incoming inspection form',req:'required',checked:false},
+{name:'Purchase Order Form (F-744)',desc:'Standard purchase order template',req:'required',checked:false},
+{name:'Approved Vendor Log (LOG-740)',desc:'Log of approved vendors',req:'required',checked:false},
+{name:'SCAR Log (LOG-741)',desc:'Log of supplier corrective actions',req:'required',checked:false}
+]},
+{section:'OPERATIONS',items:[
+{name:'Equipment Log (LOG-760)',desc:'Equipment inventory log',req:'required',checked:false},
+{name:'Calibration & Maintenance Records (F-761)',desc:'Equipment calibration and maintenance records',req:'required',checked:false},
+{name:'Calibration & Maintenance WIs',desc:'Work instructions for calibration and maintenance',req:'required',checked:false}
+]},
+{section:'QUALITY DOCUMENTS',items:[
+{name:'CAPA Form (F-850)',desc:'Corrective and Preventive Action form',req:'required',checked:false},
+{name:'CAPA Log (LOG-850)',desc:'CAPA tracking log',req:'required',checked:false},
+{name:'Complaint Form (F-822)',desc:'Customer complaint form',req:'required',checked:false},
+{name:'Complaint Log (LOG-822)',desc:'Complaint tracking log',req:'required',checked:false},
+{name:'NCR Form (F-830)',desc:'Non-Conformance Report form',req:'required',checked:false},
+{name:'NCR Log (LOG-830)',desc:'NCR tracking log',req:'required',checked:false},
+{name:'Management Review Plan',desc:'Management review schedule and plan',req:'required',checked:false},
+{name:'Initial Quality Objectives',desc:'Defined quality objectives',req:'required',checked:false},
+{name:'Internal Audit Schedule',desc:'Internal audit schedule',req:'required',checked:false}
+]},
+{section:'REGISTRATIONS',items:[
+{name:'GUDID Submission',desc:'FDA Global Unique Device Identification Database',req:'required',checked:false},
+{name:'Foreign Agent Submission',desc:'International regulatory agent submissions',req:'optional',checked:false}
+]}
+],
+timeline:[]}
 ];
 
 function renderTemplates(){document.getElementById('templatesGrid').innerHTML=TEMPLATES.map((t,i)=>`<div class="card" style="cursor:pointer;border-top:3px solid ${t.color}" onclick="applyTemplate(${i})"><div class="card-body"><div style="font-size:15px;font-weight:700;margin-bottom:4px">${esc(t.name)}</div><div style="font-size:12px;color:var(--text-muted);line-height:1.4">${esc(t.desc)}</div><div style="margin-top:10px;font-size:11px;color:var(--text-muted)">${t.roadmap.length} phases &middot; ${t.roadmap.reduce((a,p)=>a+p.tasks.length,0)} tasks</div></div></div>`).join('')}
