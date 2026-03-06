@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prime Path OS — Consultant Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════ */
+/* PRIME PATH OS — Phase 1: Light / Teal Theme            */
+/* ═══════════════════════════════════════════════════════ */
+:root {
+  --bg: #F4F6F8;
+  --bg-white: #FFFFFF;
+  --bg-sidebar: #1B2A3C;
+  --bg-sidebar-hover: #243447;
+  --bg-sidebar-active: #2C4158;
+  --bg-topbar: #FFFFFF;
+  --border: #E2E8F0;
+  --border-light: #EDF2F7;
+  --border-sidebar: #2C4158;
+  --text: #1A202C;
+  --text-secondary: #4A5568;
+  --text-muted: #A0AEC0;
+  --text-sidebar: #CBD5E0;
+  --text-sidebar-muted: #718096;
+  --teal: #2B8A7E;
+  --teal-light: #E6F7F5;
+  --teal-dark: #1D6960;
+  --teal-bg: rgba(43,138,126,0.08);
+  --green: #38A169;
+  --green-light: #E6F9EF;
+  --amber: #D69E2E;
+  --amber-light: #FEF9E7;
+  --red: #E53E3E;
+  --red-light: #FEE8E7;
+  --blue: #3182CE;
+  --blue-light: #EBF4FF;
+  --purple: #805AD5;
+  --purple-light: #F3EAFF;
+  --orange: #DD6B20;
+  --orange-light: #FFF3E6;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --sidebar-w: 250px;
+  --topbar-h: 50px;
+  --tabbar-h: 42px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E0; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #A0AEC0; }
+button { font-family: var(--font); cursor: pointer; border: none; outline: none; }
+input, textarea, select { font-family: var(--font); outline: none; }
+a { color: var(--teal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── LOGIN ── */
+#login-screen {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #1B2A3C 0%, #2B8A7E 100%);
+}
+#login-screen.hidden { display: none; }
+.login-card {
+  width: 400px; padding: 44px 36px; background: #fff;
+  border-radius: 12px; box-shadow: var(--shadow-lg);
+}
+.login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+.login-logo .logo-icon {
+  width: 38px; height: 38px; background: var(--teal); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 15px; color: #fff; letter-spacing: -0.5px;
+}
+.login-logo .logo-text { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+.login-logo .logo-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.login-field { margin-bottom: 14px; }
+.login-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+.login-field input {
+  width: 100%; padding: 10px 12px; background: #F7FAFC;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text); font-size: 14px; transition: border-color 0.2s;
+}
+.login-field input:focus { border-color: var(--teal); }
+.login-btn {
+  width: 100%; padding: 11px; margin-top: 6px;
+  background: var(--teal); color: #fff;
+  font-size: 14px; font-weight: 600; border-radius: var(--radius);
+  transition: background 0.2s;
+}
+.login-btn:hover { background: var(--teal-dark); }
+.login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-error { color: var(--red); font-size: 12px; margin-top: 10px; min-height: 16px; }
+.login-footer { text-align: center; margin-top: 16px; font-size: 11px; color: var(--text-muted); }
+
+/* ── APP SHELL ── */
+#app-shell { display: none; height: 100vh; }
+#app-shell.active { display: flex; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w); height: 100vh; background: var(--bg-sidebar);
+  display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
+}
+.sidebar-header {
+  padding: 14px 16px; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--border-sidebar);
+}
+.sidebar-header .s-icon {
+  width: 30px; height: 30px; background: var(--teal); border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; color: #fff; flex-shrink: 0;
+}
+.sidebar-header .s-title { font-weight: 700; font-size: 14px; color: #fff; letter-spacing: -0.3px; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 8px; }
+.nav-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--text-sidebar-muted); padding: 14px 10px 5px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+  border-radius: var(--radius); color: var(--text-sidebar);
+  font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.12s;
+}
+.nav-item:hover { background: var(--bg-sidebar-hover); color: #fff; }
+.nav-item.active { background: var(--bg-sidebar-active); color: #fff; }
+.nav-item .ni-icon { width: 16px; text-align: center; flex-shrink: 0; opacity: 0.7; }
+.nav-item .ni-badge {
+  margin-left: auto; background: var(--red); color: #fff;
+  font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 8px;
+}
+/* Tree nav */
+.nav-tree { padding-left: 12px; }
+.nav-tree .nav-item { font-size: 12px; padding: 6px 10px; }
+.nav-expand {
+  display: flex; align-items: center; gap: 6px; padding: 7px 10px;
+  border-radius: var(--radius); color: var(--text-sidebar);
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.12s;
+}
+.nav-expand:hover { background: var(--bg-sidebar-hover); }
+.nav-expand .arrow { font-size: 10px; transition: transform 0.2s; }
+.nav-expand.open .arrow { transform: rotate(90deg); }
+.nav-tree-children { display: none; padding-left: 8px; }
+.nav-tree-children.open { display: block; }
+
+.sidebar-footer {
+  padding: 10px 14px; border-top: 1px solid var(--border-sidebar);
+  display: flex; align-items: center; gap: 9px;
+}
+.sidebar-footer .user-avatar {
+  width: 28px; height: 28px; background: var(--teal); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.sidebar-footer .user-email { font-size: 11px; color: var(--text-sidebar-muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn-signout {
+  padding: 4px 9px; background: transparent; border: 1px solid var(--border-sidebar);
+  color: var(--text-sidebar-muted); font-size: 10px; border-radius: 5px; transition: all 0.15s;
+}
+.btn-signout:hover { background: rgba(229,62,62,0.15); color: var(--red); border-color: rgba(229,62,62,0.4); }
+
+/* ── MAIN AREA ── */
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Topbar with breadcrumb */
+.topbar {
+  height: var(--topbar-h); padding: 0 24px; display: flex; align-items: center;
+  background: var(--bg-topbar); border-bottom: 1px solid var(--border); gap: 12px; flex-shrink: 0;
+}
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.breadcrumb-item { color: var(--text-muted); cursor: pointer; }
+.breadcrumb-item:hover { color: var(--teal); }
+.breadcrumb-sep { color: var(--text-muted); font-size: 10px; }
+.breadcrumb-current { color: var(--text); font-weight: 600; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.btn-topbar {
+  padding: 6px 14px; font-size: 12px; font-weight: 600; border-radius: var(--radius);
+  display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s;
+}
+.btn-teal { background: var(--teal); color: #fff; }
+.btn-teal:hover { background: var(--teal-dark); }
+.btn-outline { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-outline:hover { background: var(--bg); }
+
+/* Tab bar */
+.tabbar {
+  height: var(--tabbar-h); padding: 0 24px; display: flex; align-items: stretch;
+  background: var(--bg-topbar); border-bottom: 1px solid var(--border); gap: 0; flex-shrink: 0;
+}
+.tab-item {
+  padding: 0 16px; display: flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 500; color: var(--text-muted);
+  border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.tab-item:hover { color: var(--text-secondary); }
+.tab-item.active { color: var(--teal); border-bottom-color: var(--teal); font-weight: 600; }
+.tab-item .tab-count {
+  font-size: 10px; font-weight: 700; background: var(--bg); color: var(--text-muted);
+  padding: 1px 6px; border-radius: 8px;
+}
+.tab-item.active .tab-count { background: var(--teal-light); color: var(--teal); }
+
+/* ── CONTENT ── */
+.content-area { flex: 1; overflow-y: auto; padding: 24px; background: var(--bg); }
+.page { display: none; }
+.page.active { display: block; }
+
+/* Section header */
+.section-header { margin-bottom: 20px; }
+.section-title { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+.section-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+/* Cards */
+.card {
+  background: var(--bg-white); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 0; margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.card-body { padding: 18px 20px; }
+.card-header {
+  padding: 14px 20px; border-bottom: 1px solid var(--border-light);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+
+/* Info banner */
+.info-banner {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px;
+  background: var(--amber-light); border: 1px solid #F6E5A3;
+  border-radius: var(--radius); margin-bottom: 20px; font-size: 12px; color: #92610E;
+}
+.info-banner .ib-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+/* ── STAT ROW ── */
+.stat-row { display: flex; gap: 0; margin-bottom: 24px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+.stat-cell { flex: 1; padding: 16px 20px; border-right: 1px solid var(--border-light); }
+.stat-cell:last-child { border-right: none; }
+.stat-cell .sc-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-muted); margin-bottom: 4px; }
+.stat-cell .sc-value { font-size: 24px; font-weight: 700; font-family: var(--mono); }
+.stat-cell .sc-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── BUTTONS ── */
+.btn { padding: 7px 14px; font-size: 12px; font-weight: 600; border-radius: var(--radius); transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; }
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--teal-dark); }
+.btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--bg); }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.btn-danger { background: var(--red-light); color: var(--red); }
+.btn-danger:hover { background: var(--red); color: #fff; }
+.btn-icon { width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; background: transparent; color: var(--text-muted); border-radius: var(--radius); }
+.btn-icon:hover { background: var(--bg); color: var(--text); }
+
+/* ── BADGES ── */
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; }
+.badge-teal { background: var(--teal-light); color: var(--teal); }
+.badge-green { background: var(--green-light); color: var(--green); }
+.badge-amber { background: var(--amber-light); color: #92610E; }
+.badge-red { background: var(--red-light); color: var(--red); }
+.badge-blue { background: var(--blue-light); color: var(--blue); }
+.badge-purple { background: var(--purple-light); color: var(--purple); }
+.badge-orange { background: var(--orange-light); color: var(--orange); }
+.badge-gray { background: #EDF2F7; color: var(--text-muted); }
+/* Status badges */
+.status-tag { padding: 3px 10px; font-size: 10px; font-weight: 700; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+.st-not-started { background: #EDF2F7; color: #718096; }
+.st-in-progress { background: var(--teal-light); color: var(--teal); }
+.st-waiting-client { background: var(--amber-light); color: #92610E; }
+.st-waiting-lab { background: var(--purple-light); color: var(--purple); }
+.st-blocked { background: var(--red-light); color: var(--red); }
+.st-complete { background: var(--green-light); color: var(--green); }
+/* Task type tags */
+.task-tag { padding: 2px 8px; font-size: 10px; font-weight: 600; border-radius: 4px; }
+.tt-plan { background: var(--blue-light); color: var(--blue); }
+.tt-review { background: var(--amber-light); color: #92610E; }
+.tt-doc { background: var(--purple-light); color: var(--purple); }
+.tt-test { background: var(--orange-light); color: var(--orange); }
+.tt-submit { background: var(--teal-light); color: var(--teal); }
+/* Req/Optional */
+.req-tag { padding: 2px 7px; font-size: 10px; font-weight: 700; border-radius: 3px; }
+.req-required { background: var(--red-light); color: var(--red); }
+.req-optional { background: var(--amber-light); color: #92610E; }
+
+/* ── FORMS ── */
+.form-group { margin-bottom: 12px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; padding: 8px 12px; background: #F7FAFC;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text); font-size: 13px; transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--teal); background: #fff; }
+.form-textarea { resize: vertical; min-height: 70px; }
+.form-select {
+  appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23718096' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
+}
+.form-row { display: flex; gap: 12px; }
+.form-row > * { flex: 1; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1000;
+  display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px);
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: #fff; border-radius: var(--radius-lg); width: 500px;
+  max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+}
+.modal-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h3 { font-size: 15px; font-weight: 700; }
+.modal-close { background: transparent; color: var(--text-muted); font-size: 18px; padding: 4px; border-radius: var(--radius); }
+.modal-close:hover { background: var(--bg); color: var(--text); }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ── TOGGLE ── */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-light); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-info .ti-label { font-size: 13px; font-weight: 600; color: var(--text); }
+.toggle-info .ti-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.toggle {
+  width: 38px; height: 22px; background: #CBD5E0; border-radius: 11px;
+  position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0;
+}
+.toggle.on { background: var(--teal); }
+.toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; background: #fff; border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15); transition: transform 0.2s;
+}
+.toggle.on::after { transform: translateX(16px); }
+
+/* ── ROADMAP ITEMS ── */
+.rm-phase {
+  background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  margin-bottom: 16px; overflow: hidden; box-shadow: var(--shadow-sm);
+}
+.rm-phase-header {
+  display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+  cursor: pointer; transition: background 0.12s;
+}
+.rm-phase-header:hover { background: #FAFBFC; }
+.rm-phase-num {
+  width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.rm-phase-info { flex: 1; }
+.rm-phase-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.rm-phase-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.rm-phase-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.rm-phase-duration { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+.rm-phase-progress { font-size: 11px; font-family: var(--mono); color: var(--text-muted); }
+.rm-phase-body { display: none; border-top: 1px solid var(--border-light); }
+.rm-phase-body.open { display: block; }
+.rm-task {
+  display: flex; align-items: center; gap: 12px; padding: 10px 20px 10px 52px;
+  border-bottom: 1px solid var(--border-light); transition: background 0.1s;
+}
+.rm-task:last-child { border-bottom: none; }
+.rm-task:hover { background: #FAFBFC; }
+.rm-task-check {
+  width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 4px;
+  flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; font-size: 11px; color: transparent;
+}
+.rm-task-check.checked { background: var(--teal); border-color: var(--teal); color: #fff; }
+.rm-task-info { flex: 1; min-width: 0; }
+.rm-task-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.rm-task-name.done { text-decoration: line-through; color: var(--text-muted); }
+.rm-task-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.rm-task-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ── CHECKLIST ── */
+.cl-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); padding: 14px 0 6px; }
+.cl-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.cl-item:last-child { border-bottom: none; }
+.cl-item-info { flex: 1; }
+.cl-item-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.cl-item-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+/* ── TIMELINE ── */
+.tl-item {
+  position: relative; padding: 0 0 24px 32px;
+}
+.tl-item::before {
+  content: ''; position: absolute; left: 9px; top: 12px; bottom: 0;
+  width: 2px; background: var(--border);
+}
+.tl-item:last-child::before { display: none; }
+.tl-dot {
+  position: absolute; left: 0; top: 6px;
+  width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--bg);
+  box-shadow: 0 0 0 2px var(--teal);
+  background: var(--teal); z-index: 1;
+}
+.tl-dot.not-started { background: #CBD5E0; box-shadow: 0 0 0 2px #CBD5E0; }
+.tl-dot.complete { background: var(--green); box-shadow: 0 0 0 2px var(--green); }
+.tl-dot.active { background: var(--teal); box-shadow: 0 0 0 2px var(--teal); }
+.tl-card {
+  background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 14px 18px; box-shadow: var(--shadow-sm);
+}
+.tl-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.tl-card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.tl-card-month { font-size: 12px; color: var(--text-muted); font-family: var(--mono); }
+.tl-card-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; }
+.tl-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.tl-tag { padding: 2px 8px; font-size: 10px; font-weight: 500; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary); }
+.tl-card-actions { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.tl-check-icon { font-size: 14px; color: var(--green); }
+
+/* ── DOCUMENTS ── */
+.doc-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.doc-item:last-child { border-bottom: none; }
+.doc-icon { width: 32px; height: 32px; background: var(--bg); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.doc-info { flex: 1; }
+.doc-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.doc-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+/* ── NOTES / DECISIONS ── */
+.note-item {
+  padding: 14px 18px; border: 1px solid var(--border); border-radius: var(--radius-lg);
+  margin-bottom: 10px; background: var(--bg-white); box-shadow: var(--shadow-sm);
+}
+.note-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.note-title { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+.note-date { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+.note-body { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+.note-footer { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 11px; color: var(--text-muted); }
+
+/* ── ACTIONS LIST ── */
+.action-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.action-item:last-child { border-bottom: none; }
+.action-info { flex: 1; }
+.action-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.action-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 40px 20px; }
+.empty-icon { font-size: 28px; color: var(--text-muted); opacity: 0.4; margin-bottom: 10px; }
+.empty-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+.empty-desc { font-size: 12px; color: var(--text-muted); }
+
+/* ── TOAST ── */
+.toast-container { position: fixed; top: 14px; right: 14px; z-index: 2000; display: flex; flex-direction: column; gap: 6px; }
+.toast {
+  padding: 10px 16px; background: #fff; border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  font-size: 13px; display: flex; align-items: center; gap: 8px;
+  animation: toastIn 0.25s ease-out;
+}
+@keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error { border-left: 3px solid var(--red); }
+.toast.info { border-left: 3px solid var(--teal); }
+
+/* Expand/Collapse */
+.expand-btn { font-size: 11px; color: var(--teal); cursor: pointer; font-weight: 600; }
+.expand-btn:hover { text-decoration: underline; }
+
+/* Grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+</style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">PP</div>
+      <div><div class="logo-text">Prime Path OS</div><div class="logo-sub">Consultant Portal</div></div>
+    </div>
+    <div class="login-field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@primepathmedtech.com"></div>
+    <div class="login-field"><label>Password</label><input type="password" id="loginPassword" placeholder="Enter password"></div>
+    <button class="login-btn" id="loginBtn">Sign In</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-footer">Secured by Supabase Auth</div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="s-icon">PP</div>
+      <div class="s-title">Prime Path OS</div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <div class="nav-label">Main</div>
+      <div class="nav-item active" data-page="dashboard"><span class="ni-icon">&#9632;</span> Dashboard</div>
+      <div class="nav-item" data-page="action-required"><span class="ni-icon">&#9888;</span> Action Required <span class="ni-badge" id="actionBadge">0</span></div>
+      <div class="nav-label">Active Projects</div>
+      <div id="sidebarProjects"><!-- Dynamic --></div>
+      <div class="nav-label">Settings</div>
+      <div class="nav-item" data-page="templates"><span class="ni-icon">&#9881;</span> Templates</div>
+      <div class="nav-item" data-page="settings"><span class="ni-icon">&#9881;</span> Preferences</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <div class="user-email" id="userEmail">--</div>
+      <button class="btn-signout" id="signOutBtn">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-area">
+    <div class="topbar">
+      <div class="breadcrumb" id="breadcrumb">
+        <span class="breadcrumb-item" onclick="navigateTo('dashboard')">Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-topbar btn-outline" id="btnExport">Export</button>
+        <button class="btn-topbar btn-teal" id="btnNewProject" onclick="openModal('newProjectModal')">+ New Project</button>
+        <button class="btn-topbar btn-outline" id="btnSave" onclick="saveState()">Save</button>
+      </div>
+    </div>
+    <div class="tabbar" id="tabbar" style="display:none;">
+      <div class="tab-item active" data-tab="roadmap">Roadmap</div>
+      <div class="tab-item" data-tab="checklist">Checklist <span class="tab-count" id="clCount">0/0</span></div>
+      <div class="tab-item" data-tab="timeline">Timeline</div>
+      <div class="tab-item" data-tab="documents">Documents <span class="tab-count" id="docCount">0</span></div>
+      <div class="tab-item" data-tab="notes">Notes <span class="tab-count" id="noteCount">0</span></div>
+      <div class="tab-item" data-tab="device-setup">Device Setup</div>
+      <div class="tab-item" data-tab="actions">Actions <span class="tab-count" id="actCount">0</span></div>
+    </div>
+    <div class="content-area" id="contentArea">
+
+      <!-- ═══ DASHBOARD ═══ -->
+      <div class="page active" id="page-dashboard">
+        <div class="section-header">
+          <div class="section-title">Dashboard</div>
+          <div class="section-subtitle">Overview of all active consulting projects</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-cell"><div class="sc-label">Active Projects</div><div class="sc-value" id="dStatProjects">0</div></div>
+          <div class="stat-cell"><div class="sc-label">Open Actions</div><div class="sc-value" id="dStatActions" style="color:var(--amber)">0</div></div>
+          <div class="stat-cell"><div class="sc-label">Upcoming Milestones</div><div class="sc-value" id="dStatMilestones" style="color:var(--teal)">0</div></div>
+          <div class="stat-cell"><div class="sc-label">Blocked Items</div><div class="sc-value" id="dStatBlocked" style="color:var(--red)">0</div></div>
+        </div>
+        <div id="dashProjectsList"></div>
+      </div>
+
+      <!-- ═══ WORKSTREAM VIEW (tabs) ═══ -->
+      <div class="page" id="page-workstream">
+
+        <!-- Roadmap Tab -->
+        <div class="tab-page active" id="tab-roadmap">
+          <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+            <div><div class="section-title" id="wsTitle">Roadmap</div><div class="section-subtitle">Track progress through all regulatory phases</div></div>
+            <div style="display:flex;gap:8px"><span class="expand-btn" onclick="toggleAllPhases(true)">Expand All</span><span class="expand-btn" onclick="toggleAllPhases(false)">Collapse All</span></div>
+          </div>
+          <div class="stat-row" id="wsStatRow"></div>
+          <div id="roadmapContainer"></div>
+        </div>
+
+        <!-- Checklist Tab -->
+        <div class="tab-page" id="tab-checklist" style="display:none">
+          <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+            <div><div class="section-title">Submission Checklist</div><div class="section-subtitle">Required and recommended documents for a complete submission</div></div>
+            <div id="clCompletionBadge"></div>
+          </div>
+          <div class="card"><div class="card-body" id="checklistContainer"></div></div>
+        </div>
+
+        <!-- Timeline Tab -->
+        <div class="tab-page" id="tab-timeline" style="display:none">
+          <div class="section-header">
+            <div class="section-title">Regulatory Timeline</div>
+            <div class="section-subtitle">Estimated milestones across your submission journey</div>
+          </div>
+          <div class="info-banner"><span class="ib-icon">&#9888;</span> Timelines are estimates. FDA review times vary. Additional Information requests can extend the review period significantly.</div>
+          <div id="timelineContainer"></div>
+        </div>
+
+        <!-- Documents Tab -->
+        <div class="tab-page" id="tab-documents" style="display:none">
+          <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+            <div><div class="section-title">Documents</div><div class="section-subtitle">Shared files and links for this project</div></div>
+            <button class="btn btn-primary" onclick="openModal('docModal')">+ Add Document</button>
+          </div>
+          <div class="card"><div class="card-body" id="documentsContainer"></div></div>
+        </div>
+
+        <!-- Notes Tab -->
+        <div class="tab-page" id="tab-notes" style="display:none">
+          <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+            <div><div class="section-title">Notes &amp; Decisions</div><div class="section-subtitle">Capture key decisions and reasoning for this project</div></div>
+            <button class="btn btn-primary" onclick="openModal('noteModal')">+ Add Note</button>
+          </div>
+          <div id="notesContainer"></div>
+        </div>
+
+        <!-- Device Setup Tab -->
+        <div class="tab-page" id="tab-device-setup" style="display:none">
+          <div class="section-header">
+            <div class="section-title">Device Setup</div>
+            <div class="section-subtitle">Configure device inputs to customize the roadmap and checklist</div>
+          </div>
+          <div class="info-banner"><span class="ib-icon">&#9888;</span> Device inputs control which tasks and checklist items are visible. Set these accurately to reflect your actual device before reviewing the roadmap.</div>
+          <div id="deviceSetupContainer"></div>
+        </div>
+
+        <!-- Actions Tab -->
+        <div class="tab-page" id="tab-actions" style="display:none">
+          <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+            <div><div class="section-title">Actions</div><div class="section-subtitle">Tasks requiring attention</div></div>
+            <button class="btn btn-primary" onclick="openModal('actionModal')">+ Add Action</button>
+          </div>
+          <div class="card"><div class="card-body" id="actionsContainer"></div></div>
+        </div>
+      </div>
+
+      <!-- ═══ TEMPLATES PAGE ═══ -->
+      <div class="page" id="page-templates">
+        <div class="section-header">
+          <div class="section-title">Service Templates</div>
+          <div class="section-subtitle">Select a template to auto-populate a new workstream</div>
+        </div>
+        <div class="grid-2" id="templatesGrid"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- New Project -->
+<div class="modal-overlay" id="newProjectModal">
+  <div class="modal">
+    <div class="modal-header"><h3>New Project</h3><button class="modal-close" onclick="closeModal('newProjectModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Company Name</label><input class="form-input" id="npCompany" placeholder="e.g. Acuity Medical"></div>
+      <div class="form-group"><label class="form-label">Device / Product Name</label><input class="form-input" id="npDevice" placeholder="e.g. CardioWatch Pro"></div>
+      <div class="form-group"><label class="form-label">Workstream Type</label>
+        <select class="form-select" id="npWorkstream">
+          <option value="510(k)">510(k) Clearance</option>
+          <option value="PMA">PMA Approval</option>
+          <option value="De Novo">De Novo Classification</option>
+          <option value="EU MDR">EU MDR Compliance</option>
+          <option value="QMS">QMS Creation / Maintenance</option>
+          <option value="Clinical">Clinical Trial</option>
+          <option value="Custom">Custom Workstream</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Assigned Consultant</label><input class="form-input" id="npConsultant" placeholder="e.g. Alex Johnson"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('newProjectModal')">Cancel</button><button class="btn btn-primary" onclick="createProject()">Create Project</button></div>
+  </div>
+</div>
+
+<!-- Add Document -->
+<div class="modal-overlay" id="docModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Add Document</h3><button class="modal-close" onclick="closeModal('docModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Document Name</label><input class="form-input" id="docName" placeholder="e.g. Biocompatibility Report"></div>
+      <div class="form-group"><label class="form-label">URL / Link</label><input class="form-input" id="docUrl" placeholder="https://..."></div>
+      <div class="form-group"><label class="form-label">Type</label>
+        <select class="form-select" id="docType"><option>SharePoint</option><option>External URL</option><option>FDA Link</option><option>Google Drive</option><option>Other</option></select>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('docModal')">Cancel</button><button class="btn btn-primary" onclick="addDocument()">Add Document</button></div>
+  </div>
+</div>
+
+<!-- Add Note -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Capture Decision / Note</h3><button class="modal-close" onclick="closeModal('noteModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Situation *</label><input class="form-input" id="noteSituation" placeholder="What is the context or problem?"></div>
+      <div class="form-group"><label class="form-label">Decision *</label><input class="form-input" id="noteDecision" placeholder="What was decided?"></div>
+      <div class="form-group"><label class="form-label">Reasoning</label><textarea class="form-textarea" id="noteReasoning" placeholder="Why was this decision made? What alternatives were considered?"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Owner</label><input class="form-input" id="noteOwner" placeholder="e.g. Alex J."></div>
+        <div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date" id="noteDate"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('noteModal')">Cancel</button><button class="btn btn-primary" onclick="addNote()">Save Note</button></div>
+  </div>
+</div>
+
+<!-- Add Action -->
+<div class="modal-overlay" id="actionModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Add Action</h3><button class="modal-close" onclick="closeModal('actionModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Action Description</label><input class="form-input" id="actTitle" placeholder="e.g. Upload testing protocol"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Assignee</label><input class="form-input" id="actAssignee" placeholder="e.g. Alex J."></div>
+        <div class="form-group"><label class="form-label">Due Date</label><input class="form-input" type="date" id="actDue"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="actStatus">
+          <option value="Not Started">Not Started</option><option value="In Progress">In Progress</option>
+          <option value="Waiting on Client">Waiting on Client</option><option value="Waiting on Lab">Waiting on Lab</option>
+          <option value="Blocked">Blocked</option><option value="Complete">Complete</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('actionModal')">Cancel</button><button class="btn btn-primary" onclick="addAction()">Add Action</button></div>
+  </div>
+</div>
+
+<!-- Edit Task -->
+<div class="modal-overlay" id="editTaskModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Edit Task</h3><button class="modal-close" onclick="closeModal('editTaskModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Task Name</label><input class="form-input" id="etName"></div>
+      <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="etDesc"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Task Type</label>
+          <select class="form-select" id="etType"><option value="plan">Plan</option><option value="review">Review</option><option value="doc">Document</option><option value="test">Test</option><option value="submit">Submit</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-select" id="etStatus">
+            <option value="Not Started">Not Started</option><option value="In Progress">In Progress</option>
+            <option value="Waiting on Client">Waiting on Client</option><option value="Waiting on Lab">Waiting on Lab</option>
+            <option value="Blocked">Blocked</option><option value="Complete">Complete</option>
+          </select>
+        </div>
+      </div>
+      <input type="hidden" id="etPhaseIdx"><input type="hidden" id="etTaskIdx">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="deleteTask()">Delete Task</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-ghost" onclick="closeModal('editTaskModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTaskEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Task to Phase -->
+<div class="modal-overlay" id="addTaskModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Add Task</h3><button class="modal-close" onclick="closeModal('addTaskModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Task Name</label><input class="form-input" id="atName" placeholder="e.g. Review special controls"></div>
+      <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="atDesc" placeholder="Brief description"></div>
+      <div class="form-group"><label class="form-label">Task Type</label>
+        <select class="form-select" id="atType"><option value="plan">Plan</option><option value="review">Review</option><option value="doc">Document</option><option value="test">Test</option><option value="submit">Submit</option></select>
+      </div>
+      <input type="hidden" id="atPhaseIdx">
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('addTaskModal')">Cancel</button><button class="btn btn-primary" onclick="addTaskToPhase()">Add Task</button></div>
+  </div>
+</div>
+
+<!-- Add Phase -->
+<div class="modal-overlay" id="addPhaseModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Add Phase</h3><button class="modal-close" onclick="closeModal('addPhaseModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Phase Name</label><input class="form-input" id="apName" placeholder="e.g. Testing & Verification"></div>
+      <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="apDesc" placeholder="Brief description of this phase"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Duration Estimate</label><input class="form-input" id="apDuration" placeholder="e.g. 6-8 wks"></div>
+        <div class="form-group"><label class="form-label">Color</label>
+          <select class="form-select" id="apColor"><option value="#2B8A7E">Teal</option><option value="#3182CE">Blue</option><option value="#38A169">Green</option><option value="#D69E2E">Amber</option><option value="#E53E3E">Red</option><option value="#805AD5">Purple</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('addPhaseModal')">Cancel</button><button class="btn btn-primary" onclick="addPhase()">Add Phase</button></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// PRIME PATH OS — Phase 1 JavaScript
+// ═══════════════════════════════════════════════════════════
+
+const SUPABASE_URL = 'https://ymdjaqikfvnpdaookcpw.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltZGphcWlrZnZucGRhb29rY3B3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NzgyMjksImV4cCI6MjA4ODA1NDIyOX0.DsIw9AQHDSI9oFGiY2b581ZFCDeEe3ZWZlEnFxlrpGk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── STATE ──
+const S = {
+  user: null,
+  projects: [],        // [{id, company, device, workstream, consultant, status, roadmap[], checklist[], timeline[], documents[], notes[], actions[], deviceSetup{}}]
+  currentProject: null, // index
+  currentTab: 'roadmap',
+  currentPage: 'dashboard'
+};
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function today() { return new Date().toISOString().slice(0,10); }
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ── TOAST ──
+function toast(msg, type='info') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div'); t.className = `toast ${type}`;
+  t.textContent = msg; c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+// ── PERSISTENCE ──
+function saveState() { try { localStorage.setItem('ppos_v2', JSON.stringify({projects: S.projects})); } catch(e){} }
+function loadState() { try { const d = JSON.parse(localStorage.getItem('ppos_v2')); if (d?.projects) S.projects = d.projects; } catch(e){} }
+
+// ── MODAL ──
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+document.querySelectorAll('.modal-overlay').forEach(m => { m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); }); });
+
+// ── STATUS HELPERS ──
+function statusClass(s) {
+  const map = {'Not Started':'st-not-started','In Progress':'st-in-progress','Waiting on Client':'st-waiting-client','Waiting on Lab':'st-waiting-lab','Blocked':'st-blocked','Complete':'st-complete'};
+  return map[s] || 'st-not-started';
+}
+function statusTag(s) { return `<span class="status-tag ${statusClass(s)}">${esc(s)}</span>`; }
+function taskTag(t) {
+  const map = {plan:'tt-plan',review:'tt-review',doc:'tt-doc',test:'tt-test',submit:'tt-submit'};
+  return `<span class="task-tag ${map[t]||'tt-plan'}">${esc(t)}</span>`;
+}
+function reqTag(r) { return r === 'required' ? '<span class="req-tag req-required">required</span>' : '<span class="req-tag req-optional">optional</span>'; }
+
+// ── AUTH ──
+async function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  const err = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+  err.textContent = ''; if (!email||!pass) { err.textContent = 'Please enter email and password.'; return; }
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try {
+    let { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error && error.message.includes('Invalid login')) {
+      const r = await sb.auth.signUp({ email, password: pass });
+      if (r.error) { err.textContent = r.error.message; btn.disabled=false; btn.textContent='Sign In'; return; }
+      data = r.data;
+    } else if (error) { err.textContent = error.message; btn.disabled=false; btn.textContent='Sign In'; return; }
+    S.user = data.user || data.session?.user;
+    showApp(); toast('Signed in', 'success');
+  } catch(e) { err.textContent = 'Connection error'; btn.disabled=false; btn.textContent='Sign In'; }
+}
+async function handleSignOut() {
+  await sb.auth.signOut(); S.user = null;
+  document.getElementById('app-shell').classList.remove('active');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('loginBtn').disabled=false; document.getElementById('loginBtn').textContent='Sign In';
+}
+function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-shell').classList.add('active');
+  const em = S.user?.email||'User';
+  document.getElementById('userEmail').textContent = em;
+  document.getElementById('userAvatar').textContent = em.charAt(0).toUpperCase();
+  loadState(); refreshAll();
+}
+async function checkSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) { S.user = session.user; showApp(); }
+}
+
+// ── NAVIGATION ──
+function navigateTo(page, projectIdx) {
+  S.currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  if (page === 'workstream' && projectIdx !== undefined) {
+    S.currentProject = projectIdx;
+    S.currentTab = 'roadmap';
+    document.getElementById('page-workstream').classList.add('active');
+    document.getElementById('tabbar').style.display = 'flex';
+    setActiveTab('roadmap');
+    updateBreadcrumb();
+    renderWorkstream();
+  } else {
+    S.currentProject = null;
+    document.getElementById(`page-${page}`).classList.add('active');
+    document.getElementById('tabbar').style.display = 'none';
+    updateBreadcrumb();
+    if (page === 'dashboard') renderDashboard();
+    if (page === 'templates') renderTemplates();
+  }
+  // Update sidebar active
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
+  if (navItem) navItem.classList.add('active');
+}
+
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  if (S.currentProject !== null && S.projects[S.currentProject]) {
+    const p = S.projects[S.currentProject];
+    bc.innerHTML = `<span class="breadcrumb-item" onclick="navigateTo('dashboard')">Dashboard</span><span class="breadcrumb-sep">&#9656;</span><span class="breadcrumb-item">${esc(p.company)}</span><span class="breadcrumb-sep">&#9656;</span><span class="breadcrumb-current">${esc(p.device)} &mdash; ${esc(p.workstream)}</span>`;
+  } else {
+    bc.innerHTML = `<span class="breadcrumb-current">${S.currentPage === 'dashboard' ? 'Dashboard' : S.currentPage === 'templates' ? 'Templates' : 'Settings'}</span>`;
+  }
+}
+
+// Sidebar nav clicks
+document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+  item.addEventListener('click', () => navigateTo(item.dataset.page));
+});
+
+// Tab clicks
+document.querySelectorAll('.tab-item[data-tab]').forEach(tab => {
+  tab.addEventListener('click', () => setActiveTab(tab.dataset.tab));
+});
+
+function setActiveTab(tabName) {
+  S.currentTab = tabName;
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+  document.querySelectorAll('.tab-page').forEach(p => p.style.display = 'none');
+  const page = document.getElementById(`tab-${tabName}`);
+  if (page) page.style.display = 'block';
+  renderWorkstream();
+}
+
+// ── SIDEBAR PROJECTS ──
+function renderSidebarProjects() {
+  const el = document.getElementById('sidebarProjects');
+  if (!S.projects.length) { el.innerHTML = '<div style="padding:6px 12px;font-size:11px;color:var(--text-sidebar-muted)">No projects yet</div>'; return; }
+  // Group by company
+  const companies = {};
+  S.projects.forEach((p,i) => { if (!companies[p.company]) companies[p.company]=[]; companies[p.company].push({...p, idx:i}); });
+  el.innerHTML = Object.entries(companies).map(([comp, projs]) => `
+    <div class="nav-expand" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+      <span class="arrow">&#9656;</span> ${esc(comp)}
+    </div>
+    <div class="nav-tree-children">
+      ${projs.map(p => `<div class="nav-item" onclick="navigateTo('workstream',${p.idx})" style="padding-left:24px">
+        <span class="ni-icon" style="font-size:8px">&#9679;</span> ${esc(p.device)} &mdash; ${esc(p.workstream)}
+      </div>`).join('')}
+    </div>
+  `).join('');
+}
+
+// ── CREATE PROJECT ──
+function createProject() {
+  const company = document.getElementById('npCompany').value.trim();
+  const device = document.getElementById('npDevice').value.trim();
+  const ws = document.getElementById('npWorkstream').value;
+  const consultant = document.getElementById('npConsultant').value.trim();
+  if (!company || !device) { toast('Company and device name are required', 'error'); return; }
+
+  const template = TEMPLATES.find(t => t.type === ws);
+  const project = {
+    id: uid(), company, device, workstream: ws, consultant: consultant || 'Unassigned',
+    status: 'Active', created: today(),
+    roadmap: template ? JSON.parse(JSON.stringify(template.roadmap)) : [],
+    checklist: template ? JSON.parse(JSON.stringify(template.checklist)) : [],
+    timeline: template ? JSON.parse(JSON.stringify(template.timeline)) : [],
+    documents: [], notes: [], actions: [],
+    deviceSetup: { name: device, productCode: '', classification: 'Class II - Moderate Risk', pathway: ws, intendedUse: '',
+      characteristics: { containsSoftware: false, cybersecurity: false, sterile: false, implantable: false, electricallyPowered: false, reusable: false, predicateKnown: false, qsubRequired: false },
+      patientContact: { type: 'No Patient Contact', duration: 'Limited (<24 hrs)' }
+    }
+  };
+  S.projects.push(project);
+  saveState(); refreshAll();
+  closeModal('newProjectModal');
+  document.getElementById('npCompany').value = '';
+  document.getElementById('npDevice').value = '';
+  toast('Project created', 'success');
+  navigateTo('workstream', S.projects.length - 1);
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  document.getElementById('dStatProjects').textContent = S.projects.length;
+  let totalActions = 0, totalMilestones = 0, totalBlocked = 0;
+  S.projects.forEach(p => {
+    totalActions += p.actions.filter(a => a.status !== 'Complete').length;
+    p.roadmap.forEach(ph => { totalMilestones += ph.tasks.filter(t => t.status !== 'Complete').length; });
+    totalBlocked += p.actions.filter(a => a.status === 'Blocked').length;
+    p.roadmap.forEach(ph => { totalBlocked += ph.tasks.filter(t => t.status === 'Blocked').length; });
+  });
+  document.getElementById('dStatActions').textContent = totalActions;
+  document.getElementById('dStatMilestones').textContent = totalMilestones;
+  document.getElementById('dStatBlocked').textContent = totalBlocked;
+  document.getElementById('actionBadge').textContent = totalActions;
+
+  const el = document.getElementById('dashProjectsList');
+  if (!S.projects.length) {
+    el.innerHTML = '<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">No projects yet</div><div class="empty-desc">Create your first project to get started.</div></div></div></div>';
+    return;
+  }
+  el.innerHTML = S.projects.map((p, i) => {
+    const totalTasks = p.roadmap.reduce((a, ph) => a + ph.tasks.length, 0);
+    const doneTasks = p.roadmap.reduce((a, ph) => a + ph.tasks.filter(t => t.status === 'Complete').length, 0);
+    const pct = totalTasks ? Math.round((doneTasks/totalTasks)*100) : 0;
+    const openActions = p.actions.filter(a => a.status !== 'Complete').length;
+    return `<div class="card" style="cursor:pointer" onclick="navigateTo('workstream',${i})">
+      <div class="card-body" style="display:flex;align-items:center;gap:16px">
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:var(--text)">${esc(p.company)} &mdash; ${esc(p.device)} &mdash; ${esc(p.workstream)}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Consultant: ${esc(p.consultant)} &middot; Created: ${p.created}</div>
+        </div>
+        <div style="text-align:center;min-width:60px"><div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--teal)">${pct}%</div><div style="font-size:10px;color:var(--text-muted)">Progress</div></div>
+        <div style="text-align:center;min-width:50px"><div style="font-size:20px;font-weight:700;font-family:var(--mono)">${doneTasks}</div><div style="font-size:10px;color:var(--text-muted)">of ${totalTasks} tasks</div></div>
+        <div style="text-align:center;min-width:50px"><div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--amber)">${openActions}</div><div style="font-size:10px;color:var(--text-muted)">actions</div></div>
+        ${statusTag(p.status)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── WORKSTREAM RENDERING ──
+function getProject() { return S.currentProject !== null ? S.projects[S.currentProject] : null; }
+
+function renderWorkstream() {
+  const p = getProject(); if (!p) return;
+  // Update counts
+  const totalTasks = p.roadmap.reduce((a, ph) => a + ph.tasks.length, 0);
+  const doneTasks = p.roadmap.reduce((a, ph) => a + ph.tasks.filter(t => t.status === 'Complete').length, 0);
+  const clTotal = p.checklist.reduce((a, sec) => a + sec.items.length, 0);
+  const clDone = p.checklist.reduce((a, sec) => a + sec.items.filter(i => i.checked).length, 0);
+  document.getElementById('clCount').textContent = `${clDone}/${clTotal}`;
+  document.getElementById('docCount').textContent = p.documents.length;
+  document.getElementById('noteCount').textContent = p.notes.length;
+  document.getElementById('actCount').textContent = p.actions.filter(a => a.status !== 'Complete').length;
+
+  const pct = totalTasks ? Math.round((doneTasks/totalTasks)*100) : 0;
+  document.getElementById('wsTitle').textContent = `${p.device} &mdash; ${p.workstream}`;
+
+  // Stat row
+  document.getElementById('wsStatRow').innerHTML = `
+    <div class="stat-cell"><div class="sc-label">Progress</div><div class="sc-value">${pct}%</div><div class="sc-sub">Phase ${getCurrentPhase(p)}</div></div>
+    <div class="stat-cell"><div class="sc-label">Tasks Done</div><div class="sc-value">${doneTasks}</div><div class="sc-sub">of ${totalTasks} tasks</div></div>
+    <div class="stat-cell"><div class="sc-label">Est. Duration</div><div class="sc-value" style="font-size:18px">~12</div><div class="sc-sub">months</div></div>
+    <div class="stat-cell"><div class="sc-label">Actions</div><div class="sc-value" style="color:var(--amber)">${p.actions.filter(a=>a.status!=='Complete').length}</div><div class="sc-sub">need attention</div></div>
+  `;
+
+  if (S.currentTab === 'roadmap') renderRoadmap(p);
+  if (S.currentTab === 'checklist') renderChecklist(p);
+  if (S.currentTab === 'timeline') renderTimeline(p);
+  if (S.currentTab === 'documents') renderDocuments(p);
+  if (S.currentTab === 'notes') renderNotes(p);
+  if (S.currentTab === 'device-setup') renderDeviceSetup(p);
+  if (S.currentTab === 'actions') renderActions(p);
+}
+
+function getCurrentPhase(p) {
+  for (let i = 0; i < p.roadmap.length; i++) {
+    const done = p.roadmap[i].tasks.every(t => t.status === 'Complete');
+    if (!done) return i + 1;
+  }
+  return p.roadmap.length;
+}
+
+// ── ROADMAP ──
+function renderRoadmap(p) {
+  const el = document.getElementById('roadmapContainer');
+  if (!p.roadmap.length) {
+    el.innerHTML = `<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">No roadmap phases</div></div></div></div>
+    <button class="btn btn-primary" onclick="openModal('addPhaseModal')">+ Add Phase</button>`;
+    return;
+  }
+  el.innerHTML = p.roadmap.map((phase, pi) => {
+    const done = phase.tasks.filter(t => t.status === 'Complete').length;
+    const total = phase.tasks.length;
+    const allDone = total > 0 && done === total;
+    const someInProgress = phase.tasks.some(t => t.status === 'In Progress');
+    const phaseStatus = allDone ? 'Complete' : someInProgress ? 'In Progress' : 'Not Started';
+    return `<div class="rm-phase">
+      <div class="rm-phase-header" onclick="togglePhase(${pi})">
+        <div class="rm-phase-num" style="background:${phase.color||'var(--teal)'}">#${pi+1}</div>
+        <div class="rm-phase-info">
+          <div class="rm-phase-name">${esc(phase.name)}</div>
+          <div class="rm-phase-desc">${esc(phase.desc||'')}</div>
+        </div>
+        <div class="rm-phase-meta">
+          <span class="rm-phase-duration">${esc(phase.duration||'')}</span>
+          ${statusTag(phaseStatus)}
+          <span class="rm-phase-progress">${done}/${total}</span>
+          <span style="font-size:10px;color:var(--text-muted)">&#9662;</span>
+        </div>
+      </div>
+      <div class="rm-phase-body" id="phaseBody-${pi}">
+        ${phase.tasks.map((task, ti) => `
+          <div class="rm-task">
+            <div class="rm-task-check ${task.status==='Complete'?'checked':''}" onclick="toggleTask(${pi},${ti})">&#10003;</div>
+            <div class="rm-task-info">
+              <div class="rm-task-name ${task.status==='Complete'?'done':''}">${esc(task.name)}</div>
+              <div class="rm-task-desc">${esc(task.desc||'')}</div>
+            </div>
+            <div class="rm-task-right">
+              ${taskTag(task.type||'plan')}
+              <button class="btn-icon" onclick="openEditTask(${pi},${ti})" title="Edit">&#9998;</button>
+            </div>
+          </div>
+        `).join('')}
+        <div style="padding:8px 20px 12px 52px;display:flex;gap:8px">
+          <button class="btn btn-sm btn-ghost" onclick="openAddTask(${pi})">+ Add Task</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') + '<div style="margin-top:12px"><button class="btn btn-primary" onclick="openModal(\'addPhaseModal\')">+ Add Phase</button></div>';
+}
+
+function togglePhase(pi) {
+  const el = document.getElementById(`phaseBody-${pi}`);
+  if (el) el.classList.toggle('open');
+}
+function toggleAllPhases(open) {
+  document.querySelectorAll('.rm-phase-body').forEach(el => { if (open) el.classList.add('open'); else el.classList.remove('open'); });
+}
+
+function toggleTask(pi, ti) {
+  const p = getProject(); if (!p) return;
+  const task = p.roadmap[pi]?.tasks[ti]; if (!task) return;
+  task.status = task.status === 'Complete' ? 'Not Started' : 'Complete';
+  saveState(); renderWorkstream();
+}
+
+function openEditTask(pi, ti) {
+  const p = getProject(); if (!p) return;
+  const task = p.roadmap[pi]?.tasks[ti]; if (!task) return;
+  document.getElementById('etName').value = task.name;
+  document.getElementById('etDesc').value = task.desc || '';
+  document.getElementById('etType').value = task.type || 'plan';
+  document.getElementById('etStatus').value = task.status || 'Not Started';
+  document.getElementById('etPhaseIdx').value = pi;
+  document.getElementById('etTaskIdx').value = ti;
+  openModal('editTaskModal');
+}
+function saveTaskEdit() {
+  const p = getProject(); if (!p) return;
+  const pi = parseInt(document.getElementById('etPhaseIdx').value);
+  const ti = parseInt(document.getElementById('etTaskIdx').value);
+  const task = p.roadmap[pi]?.tasks[ti]; if (!task) return;
+  task.name = document.getElementById('etName').value.trim() || task.name;
+  task.desc = document.getElementById('etDesc').value.trim();
+  task.type = document.getElementById('etType').value;
+  task.status = document.getElementById('etStatus').value;
+  saveState(); renderWorkstream(); closeModal('editTaskModal'); toast('Task updated', 'success');
+}
+function deleteTask() {
+  const p = getProject(); if (!p) return;
+  const pi = parseInt(document.getElementById('etPhaseIdx').value);
+  const ti = parseInt(document.getElementById('etTaskIdx').value);
+  if (!confirm('Delete this task?')) return;
+  p.roadmap[pi].tasks.splice(ti, 1);
+  saveState(); renderWorkstream(); closeModal('editTaskModal'); toast('Task deleted', 'info');
+}
+
+function openAddTask(pi) {
+  document.getElementById('atPhaseIdx').value = pi;
+  document.getElementById('atName').value = '';
+  document.getElementById('atDesc').value = '';
+  openModal('addTaskModal');
+}
+function addTaskToPhase() {
+  const p = getProject(); if (!p) return;
+  const pi = parseInt(document.getElementById('atPhaseIdx').value);
+  const name = document.getElementById('atName').value.trim();
+  if (!name) { toast('Task name required', 'error'); return; }
+  p.roadmap[pi].tasks.push({ name, desc: document.getElementById('atDesc').value.trim(), type: document.getElementById('atType').value, status: 'Not Started' });
+  saveState(); renderWorkstream(); closeModal('addTaskModal'); toast('Task added', 'success');
+}
+
+function addPhase() {
+  const p = getProject(); if (!p) return;
+  const name = document.getElementById('apName').value.trim();
+  if (!name) { toast('Phase name required', 'error'); return; }
+  p.roadmap.push({ name, desc: document.getElementById('apDesc').value.trim(), duration: document.getElementById('apDuration').value.trim(), color: document.getElementById('apColor').value, tasks: [] });
+  saveState(); renderWorkstream(); closeModal('addPhaseModal'); toast('Phase added', 'success');
+}
+
+// ── CHECKLIST ──
+function renderChecklist(p) {
+  const el = document.getElementById('checklistContainer');
+  const clTotal = p.checklist.reduce((a, s) => a + s.items.length, 0);
+  const clDone = p.checklist.reduce((a, s) => a + s.items.filter(i => i.checked).length, 0);
+  document.getElementById('clCompletionBadge').innerHTML = `<span class="badge badge-teal">${clDone} / ${clTotal} complete</span>`;
+  if (!p.checklist.length) { el.innerHTML = '<div class="empty-state"><div class="empty-title">No checklist items</div></div>'; return; }
+  el.innerHTML = p.checklist.map((sec, si) => `
+    <div class="cl-section-title">${esc(sec.section)}</div>
+    ${sec.items.map((item, ii) => `
+      <div class="cl-item">
+        <div class="rm-task-check ${item.checked?'checked':''}" onclick="toggleCL(${si},${ii})">&#10003;</div>
+        <div class="cl-item-info">
+          <div class="cl-item-name" style="${item.checked?'text-decoration:line-through;color:var(--text-muted)':''}">${esc(item.name)}</div>
+          <div class="cl-item-desc">${esc(item.desc||'')}</div>
+        </div>
+        ${item.req ? reqTag(item.req) : ''}
+      </div>
+    `).join('')}
+  `).join('');
+}
+function toggleCL(si, ii) {
+  const p = getProject(); if (!p) return;
+  p.checklist[si].items[ii].checked = !p.checklist[si].items[ii].checked;
+  saveState(); renderWorkstream();
+}
+
+// ── TIMELINE ──
+function renderTimeline(p) {
+  const el = document.getElementById('timelineContainer');
+  if (!p.timeline.length) { el.innerHTML = '<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">No timeline entries</div></div></div></div>'; return; }
+  el.innerHTML = p.timeline.map((t, i) => {
+    const dotClass = t.status === 'Complete' ? 'complete' : t.status === 'Active' || t.status === 'In Progress' ? 'active' : 'not-started';
+    return `<div class="tl-item">
+      <div class="tl-dot ${dotClass}"></div>
+      <div class="tl-card">
+        <div class="tl-card-header">
+          <div class="tl-card-title">${esc(t.name)}</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="tl-card-month">${esc(t.month||'')}</span>
+            ${t.status === 'Complete' ? '<span class="tl-check-icon">&#10003;</span>' : ''}
+            ${t.status && t.status !== 'Complete' ? statusTag(t.status) : ''}
+          </div>
+        </div>
+        <div class="tl-card-desc">${esc(t.desc||'')}</div>
+        ${t.tags?.length ? `<div class="tl-tags">${t.tags.map(tag => `<span class="tl-tag">${esc(tag)}</span>`).join('')}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── DOCUMENTS ──
+function renderDocuments(p) {
+  const el = document.getElementById('documentsContainer');
+  if (!p.documents.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128196;</div><div class="empty-title">No documents yet</div><div class="empty-desc">Add SharePoint links, files, or external URLs to track project documents.</div></div>';
+    return;
+  }
+  el.innerHTML = p.documents.map((d, i) => `
+    <div class="doc-item">
+      <div class="doc-icon">&#128196;</div>
+      <div class="doc-info">
+        <div class="doc-name">${d.url ? `<a href="${esc(d.url)}" target="_blank">${esc(d.name)}</a>` : esc(d.name)}</div>
+        <div class="doc-meta">${esc(d.type||'Document')} &middot; Added ${d.date||''}</div>
+      </div>
+      <button class="btn-icon" onclick="deleteDoc(${i})" title="Remove">&#10005;</button>
+    </div>
+  `).join('');
+}
+function addDocument() {
+  const p = getProject(); if (!p) return;
+  const name = document.getElementById('docName').value.trim(); if (!name) { toast('Name required','error'); return; }
+  p.documents.push({ name, url: document.getElementById('docUrl').value.trim(), type: document.getElementById('docType').value, date: today() });
+  saveState(); renderWorkstream(); closeModal('docModal'); toast('Document added','success');
+  document.getElementById('docName').value=''; document.getElementById('docUrl').value='';
+}
+function deleteDoc(i) { const p = getProject(); if (!p) return; p.documents.splice(i,1); saveState(); renderWorkstream(); }
+
+// ── NOTES ──
+function renderNotes(p) {
+  const el = document.getElementById('notesContainer');
+  if (!p.notes.length) {
+    el.innerHTML = '<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">No notes yet</div></div></div></div>';
+    return;
+  }
+  el.innerHTML = p.notes.map((n, i) => `
+    <div class="note-item">
+      <div class="note-header">
+        <div class="note-title">${esc(n.situation)}</div>
+        <span class="note-date">${n.date||''}</span>
+        <button class="btn-icon" onclick="deleteNote(${i})">&#10005;</button>
+      </div>
+      <div style="font-size:12px;color:var(--text);font-weight:600;margin-bottom:4px">Decision: ${esc(n.decision)}</div>
+      ${n.reasoning ? `<div class="note-body">${esc(n.reasoning)}</div>` : ''}
+      <div class="note-footer">Owner: ${esc(n.owner||'--')}</div>
+    </div>
+  `).join('');
+}
+function addNote() {
+  const p = getProject(); if (!p) return;
+  const sit = document.getElementById('noteSituation').value.trim();
+  const dec = document.getElementById('noteDecision').value.trim();
+  if (!sit||!dec) { toast('Situation and Decision are required','error'); return; }
+  p.notes.unshift({ situation: sit, decision: dec, reasoning: document.getElementById('noteReasoning').value.trim(), owner: document.getElementById('noteOwner').value.trim(), date: document.getElementById('noteDate').value||today() });
+  saveState(); renderWorkstream(); closeModal('noteModal'); toast('Note saved','success');
+  document.getElementById('noteSituation').value=''; document.getElementById('noteDecision').value=''; document.getElementById('noteReasoning').value='';
+}
+function deleteNote(i) { const p = getProject(); if (!p) return; p.notes.splice(i,1); saveState(); renderWorkstream(); }
+
+// ── ACTIONS ──
+function renderActions(p) {
+  const el = document.getElementById('actionsContainer');
+  if (!p.actions.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-title">No actions yet</div></div>';
+    return;
+  }
+  el.innerHTML = p.actions.map((a, i) => `
+    <div class="action-item">
+      <div class="rm-task-check ${a.status==='Complete'?'checked':''}" onclick="toggleAction(${i})">&#10003;</div>
+      <div class="action-info">
+        <div class="action-name" style="${a.status==='Complete'?'text-decoration:line-through;color:var(--text-muted)':''}">${esc(a.title)}</div>
+        <div class="action-meta">Assignee: ${esc(a.assignee||'--')} &middot; Due: ${a.due||'--'}</div>
+      </div>
+      ${statusTag(a.status)}
+      <button class="btn-icon" onclick="deleteAction(${i})">&#10005;</button>
+    </div>
+  `).join('');
+}
+function addAction() {
+  const p = getProject(); if (!p) return;
+  const title = document.getElementById('actTitle').value.trim(); if (!title) { toast('Description required','error'); return; }
+  p.actions.push({ title, assignee: document.getElementById('actAssignee').value.trim(), due: document.getElementById('actDue').value, status: document.getElementById('actStatus').value });
+  saveState(); renderWorkstream(); closeModal('actionModal'); toast('Action added','success');
+  document.getElementById('actTitle').value='';
+}
+function toggleAction(i) { const p = getProject(); if (!p) return; p.actions[i].status = p.actions[i].status==='Complete'?'Not Started':'Complete'; saveState(); renderWorkstream(); }
+function deleteAction(i) { const p = getProject(); if (!p) return; p.actions.splice(i,1); saveState(); renderWorkstream(); }
+
+// ── DEVICE SETUP ──
+function renderDeviceSetup(p) {
+  const ds = p.deviceSetup;
+  const el = document.getElementById('deviceSetupContainer');
+  el.innerHTML = `
+    <div class="card"><div class="card-header"><div class="card-title">Device Identification</div></div><div class="card-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Device Name</label><input class="form-input" value="${esc(ds.name)}" onchange="updateDS(this,'name')"></div>
+        <div class="form-group"><label class="form-label">FDA Product Code</label><input class="form-input" value="${esc(ds.productCode)}" onchange="updateDS(this,'productCode')"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Device Classification</label>
+          <select class="form-select" onchange="updateDS(this,'classification')">
+            <option ${ds.classification==='Class I - Low Risk'?'selected':''}>Class I - Low Risk</option>
+            <option ${ds.classification==='Class II - Moderate Risk'?'selected':''}>Class II - Moderate Risk</option>
+            <option ${ds.classification==='Class III - High Risk'?'selected':''}>Class III - High Risk</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Submission Pathway</label>
+          <select class="form-select" onchange="updateDS(this,'pathway')">
+            <option ${ds.pathway==='510(k)'||ds.pathway==='Traditional 510(k)'?'selected':''}>Traditional 510(k)</option>
+            <option ${ds.pathway==='Special 510(k)'?'selected':''}>Special 510(k)</option>
+            <option ${ds.pathway==='Abbreviated 510(k)'?'selected':''}>Abbreviated 510(k)</option>
+            <option ${ds.pathway==='PMA'?'selected':''}>PMA</option>
+            <option ${ds.pathway==='De Novo'?'selected':''}>De Novo</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Intended Use</label><textarea class="form-textarea" onchange="updateDS(this,'intendedUse')" placeholder="Describe the medical purpose and target patient population...">${esc(ds.intendedUse)}</textarea></div>
+    </div></div>
+    <div class="card"><div class="card-header"><div class="card-title">Device Characteristics (rules engine)</div><div style="font-size:11px;color:var(--text-muted)">Controls which tasks appear in the roadmap</div></div><div class="card-body">
+      ${Object.entries({
+        containsSoftware: ['Contains Software', 'Embedded firmware, standalone software, or SaMD'],
+        cybersecurity: ['Cybersecurity Relevant', 'Network-connected, USB, or cloud-connected device'],
+        sterile: ['Sterile Device', 'Device is labeled sterile or requires sterilization validation'],
+        implantable: ['Implantable Device', 'Intended for permanent or temporary implantation'],
+        electricallyPowered: ['Electrically Powered', 'Requires IEC 60601-1 electrical safety testing'],
+        reusable: ['Reusable / Reprocessed', 'Intended to be cleaned and reused by healthcare provider'],
+        predicateKnown: ['Predicate Device Known', 'A suitable predicate has already been identified'],
+        qsubRequired: ['Q-Sub Meeting Required', 'Team has decided a pre-submission meeting with FDA is warranted']
+      }).map(([key, [label, desc]]) => `
+        <div class="toggle-row">
+          <div class="toggle-info"><div class="ti-label">${label}</div><div class="ti-desc">${desc}</div></div>
+          <div class="toggle ${ds.characteristics[key]?'on':''}" onclick="toggleChar(this,'${key}')"></div>
+        </div>
+      `).join('')}
+    </div></div>
+    <div class="card"><div class="card-header"><div class="card-title">Patient Contact</div></div><div class="card-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Contact Type</label>
+          <select class="form-select" onchange="updatePC(this,'type')">
+            <option ${ds.patientContact.type==='No Patient Contact'?'selected':''}>No Patient Contact</option>
+            <option ${ds.patientContact.type==='Surface Contact'?'selected':''}>Surface Contact</option>
+            <option ${ds.patientContact.type==='External Communicating'?'selected':''}>External Communicating</option>
+            <option ${ds.patientContact.type==='Implant'?'selected':''}>Implant</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Contact Duration</label>
+          <select class="form-select" onchange="updatePC(this,'duration')">
+            <option ${ds.patientContact.duration==='Limited (<24 hrs)'?'selected':''}>Limited (&lt;24 hrs)</option>
+            <option ${ds.patientContact.duration==='Prolonged (24 hrs - 30 days)'?'selected':''}>Prolonged (24 hrs - 30 days)</option>
+            <option ${ds.patientContact.duration==='Permanent (>30 days)'?'selected':''}>Permanent (&gt;30 days)</option>
+          </select>
+        </div>
+      </div>
+    </div></div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="toast('Roadmap updated based on device setup','success')">Apply &amp; Update Roadmap</button>
+      <button class="btn btn-ghost" onclick="setActiveTab('roadmap')">View Roadmap &#8594;</button>
+    </div>
+  `;
+}
+function updateDS(el, key) { const p = getProject(); if (!p) return; p.deviceSetup[key] = el.value; saveState(); }
+function toggleChar(el, key) { const p = getProject(); if (!p) return; p.deviceSetup.characteristics[key] = !p.deviceSetup.characteristics[key]; el.classList.toggle('on'); saveState(); }
+function updatePC(el, key) { const p = getProject(); if (!p) return; p.deviceSetup.patientContact[key] = el.value; saveState(); }
+
+// ── TEMPLATES ──
+const TEMPLATES = [
+  { type: '510(k)', name: '510(k) Clearance', desc: 'FDA 510(k) premarket notification for Class II devices', color: 'var(--teal)',
+    roadmap: [
+      { name: 'Device Classification & Pathway', desc: 'Identify classification, product code, and submission pathway', duration: '2-4 wks', color: '#2B8A7E',
+        tasks: [
+          { name: 'Determine Device Classification', desc: 'Confirm Class I, II, or III via FDA classification database based on intended use and risk.', type: 'plan', status: 'Not Started' },
+          { name: 'Identify Product Code & Regulation Number', desc: 'Find the CFR part and product code governing your device type.', type: 'plan', status: 'Not Started' },
+          { name: 'Assess Submission Pathway', desc: 'Confirm Traditional, Abbreviated, or Special 510(k) is appropriate.', type: 'review', status: 'Not Started' },
+          { name: 'Review Special Controls & Guidance', desc: 'Identify special controls, performance standards, applicable FDA guidance.', type: 'doc', status: 'Not Started' }
+        ]
+      },
+      { name: 'Predicate Device Search & Substantial Equivalence', desc: 'Identify cleared predicate devices and build SE argument', duration: '6-8 wks', color: '#3182CE',
+        tasks: [
+          { name: 'Search FDA 510(k) Premarket Database', desc: 'Search accessdata.fda.gov for devices with similar intended use and technology.', type: 'plan', status: 'Not Started' },
+          { name: 'Evaluate Predicate Suitability', desc: 'Confirm predicate has same intended use, legally marketed, no active Class III recalls.', type: 'review', status: 'Not Started' },
+          { name: 'Draft Substantial Equivalence Argument', desc: 'Document comparison of intended use and technological characteristics.', type: 'doc', status: 'Not Started' }
+        ]
+      },
+      { name: 'Testing & Performance Verification', desc: 'Bench, biocompatibility, electrical, software, and clinical testing', duration: '16-36 wks', color: '#D69E2E',
+        tasks: [
+          { name: 'Bench & Performance Testing', desc: 'Validate device meets specs per applicable IEC, ASTM, ISO performance standards.', type: 'test', status: 'Not Started' },
+          { name: 'Electrical Safety (IEC 60601-1)', desc: 'Electrical safety testing per IEC 60601-1 for powered medical devices.', type: 'test', status: 'Not Started' },
+          { name: 'EMC Testing (IEC 60601-1-2)', desc: 'Electromagnetic compatibility testing per IEC 60601-1-2.', type: 'test', status: 'Not Started' },
+          { name: 'Software Documentation (IEC 62304)', desc: 'Software lifecycle, SDS, SRS, hazard analysis, verification per IEC 62304.', type: 'test', status: 'Not Started' },
+          { name: 'Human Factors / Usability (IEC 62366-1)', desc: 'Summative usability evaluation demonstrating safe use by intended users.', type: 'test', status: 'Not Started' }
+        ]
+      },
+      { name: 'Technical Documentation & 510(k) Preparation', desc: 'Assemble all 510(k) sections and prepare eSTAR package', duration: '8-16 wks', color: '#805AD5',
+        tasks: [
+          { name: 'Device Description & Specifications', desc: 'Comprehensive description: design, materials, components, accessories, principle of operation.', type: 'doc', status: 'Not Started' },
+          { name: 'Intended Use & Indications for Use', desc: 'Draft IFU per 21 CFR 807.87(a) format.', type: 'doc', status: 'Not Started' },
+          { name: 'Labeling Package Review', desc: 'Review all device labels, IFU, packaging for 21 CFR Part 801 compliance.', type: 'doc', status: 'Not Started' },
+          { name: 'Performance Standards Section', desc: 'Reference and address all applicable national and international standards.', type: 'doc', status: 'Not Started' },
+          { name: 'Compile & Format Test Reports', desc: 'Gather all test reports, protocols, summaries into submission-ready format.', type: 'doc', status: 'Not Started' },
+          { name: 'Complete eSTAR Template', desc: 'Fill out FDA electronic submission template (eSTAR) with all required sections.', type: 'doc', status: 'Not Started' }
+        ]
+      },
+      { name: '510(k) Submission to FDA', desc: 'Submit via eSTAR and pay MDUFA user fee', duration: '1-3 wks', color: '#E53E3E',
+        tasks: [
+          { name: 'RTA (Refuse to Accept) Self-Check', desc: 'Internal review against FDA RTA checklist before submission.', type: 'review', status: 'Not Started' },
+          { name: 'Pay MDUFA User Fee', desc: 'Pay applicable FDA user fee (~$24,000). Confirm small business discount eligibility.', type: 'submit', status: 'Not Started' },
+          { name: 'Submit via FDA eSTAR Portal', desc: 'Submit finalized package through FDA CDRH Electronic Submission Gateway.', type: 'submit', status: 'Not Started' },
+          { name: 'Confirm K-Number & RTA Decision', desc: 'Receive 510(k) K-number and RTA acceptance within 15 business days.', type: 'review', status: 'Not Started' }
+        ]
+      },
+      { name: 'FDA Substantive Review & Clearance', desc: 'Navigate FDA review and respond to Additional Information requests', duration: '90-120 days', color: '#38A169',
+        tasks: [
+          { name: 'Monitor Substantive Review', desc: 'Track review on FDA 510(k) database. Average review ~97 calendar days.', type: 'review', status: 'Not Started' },
+          { name: 'Respond to AI/Interactive Review Requests', desc: 'Prepare complete and timely responses to Additional Information (AI) requests.', type: 'doc', status: 'Not Started' },
+          { name: 'Receive SE Decision Letter', desc: 'FDA issues Substantial Equivalence decision letter granting 510(k) clearance.', type: 'review', status: 'Not Started' },
+          { name: 'Post-Clearance Registration & Listing', desc: 'Complete establishment registration, device listing, implement any labeling updates.', type: 'submit', status: 'Not Started' }
+        ]
+      }
+    ],
+    checklist: [
+      { section: 'ADMINISTRATIVE', items: [
+        { name: 'Cover Letter', desc: 'Signed letter identifying submitter, device name, and submission type', req: 'required', checked: false },
+        { name: 'Table of Contents', desc: 'Organized TOC with section references for all submission elements', req: 'required', checked: false },
+        { name: 'FDA Form 3514 / STED', desc: 'Summary of Technical Evidence or 510(k) Summary document', req: 'required', checked: false },
+        { name: 'Truthful & Accurate Statement', desc: 'Signed certification per 21 CFR 807.87(j)', req: 'required', checked: false }
+      ]},
+      { section: 'DEVICE DESCRIPTION', items: [
+        { name: 'Detailed Device Description', desc: 'Principles of operation, components, accessories, design features', req: 'required', checked: false },
+        { name: 'Device Photos & Diagrams', desc: 'High-quality images showing all features and components', req: 'required', checked: false },
+        { name: 'Technical Specifications', desc: 'Performance specs and bill of materials', req: 'optional', checked: false }
+      ]},
+      { section: 'SUBSTANTIAL EQUIVALENCE', items: [
+        { name: 'Predicate Device Identification', desc: '510(k) number, device name, applicant, clearance date', req: 'required', checked: false },
+        { name: 'Comparison Table', desc: 'Side-by-side comparison of subject vs. predicate device', req: 'required', checked: false },
+        { name: 'SE Summary or Statement', desc: 'Conclusion of substantial equivalence with supporting rationale', req: 'required', checked: false }
+      ]},
+      { section: 'PERFORMANCE & TESTING', items: [
+        { name: 'Bench Performance Testing', desc: 'Summary demonstrating safety and performance against specifications', req: 'required', checked: false },
+        { name: 'Electrical Safety / EMC (IEC 60601)', desc: 'For electrically powered devices', req: 'optional', checked: false },
+        { name: 'Software Documentation (IEC 62304)', desc: 'For devices with embedded or standalone software', req: 'optional', checked: false },
+        { name: 'Human Factors / Usability Study', desc: 'Summative evaluation per IEC 62366-1', req: 'optional', checked: false },
+        { name: 'Shelf Life / Packaging Validation', desc: 'ASTM D4169 or equivalent', req: 'optional', checked: false }
+      ]},
+      { section: 'LABELING', items: [
+        { name: 'Device Label(s)', desc: '21 CFR Part 801 compliant device label', req: 'required', checked: false },
+        { name: 'Instructions for Use (IFU)', desc: 'Complete directions, warnings, contraindications', req: 'required', checked: false },
+        { name: 'Indications for Use Statement', desc: 'Signed IFU form per 21 CFR 807.87(e)', req: 'required', checked: false }
+      ]}
+    ],
+    timeline: [
+      { name: 'Classification & Predicate Research', desc: 'Confirm device classification, identify product code, locate suitable predicate devices.', month: 'Month 1-2', status: 'Not Started', tags: ['Class Confirmed', 'K-Database', 'Predicate ID'] },
+      { name: 'Pre-Submission Strategy', desc: 'Draft SE argument, testing plan. Assess whether Q-Sub is warranted for this project.', month: 'Month 2-4', status: 'Not Started', tags: ['SE Argument Draft', 'Testing Plan', 'Q-Sub Decision'] },
+      { name: 'Testing & Verification', desc: 'Conduct all required bench, biocompatibility, electrical safety, software, and usability testing.', month: 'Month 3-10', status: 'Not Started', tags: ['Bench', 'Biocomp', 'IEC 60601', 'Software V&V', 'HF'] },
+      { name: 'Technical File & eSTAR Assembly', desc: 'Prepare complete 510(k) technical file, SE summary, labeling package, and eSTAR submission.', month: 'Month 8-12', status: 'Not Started', tags: ['eSTAR', 'Labeling', 'RTA Review'] },
+      { name: '510(k) Submission', desc: 'Submit finalized eSTAR. Pay MDUFA fee. Receive K-number within 15 days.', month: 'Month 12', status: 'Not Started', tags: ['Fee Paid', 'K# Assigned', 'RTA Accepted'] },
+      { name: 'FDA Review Period', desc: '~90-day FDA substantive review. Respond to any Additional Information requests promptly.', month: 'Month 12-16', status: 'Not Started', tags: ['AI Response', 'Interactive Review'] },
+      { name: '510(k) Clearance', desc: 'Receive SE decision letter. Complete registration, device listing, market launch.', month: 'Month 15+', status: 'Not Started', tags: ['SE Letter', 'Device Listed', 'Launch'] }
+    ]
+  },
+  { type: 'PMA', name: 'PMA Approval', desc: 'Premarket Approval for Class III high-risk devices', color: 'var(--red)', roadmap: [], checklist: [], timeline: [] },
+  { type: 'De Novo', name: 'De Novo Classification', desc: 'Novel device pathway for low-to-moderate risk', color: 'var(--green)', roadmap: [], checklist: [], timeline: [] },
+  { type: 'EU MDR', name: 'EU MDR Compliance', desc: 'European Medical Device Regulation pathway', color: 'var(--purple)', roadmap: [], checklist: [], timeline: [] },
+  { type: 'QMS', name: 'QMS Creation', desc: 'Quality Management System per ISO 13485 / 21 CFR 820', color: 'var(--amber)', roadmap: [], checklist: [], timeline: [] },
+  { type: 'Clinical', name: 'Clinical Trial', desc: 'IDE clinical trial planning and execution', color: 'var(--blue)', roadmap: [], checklist: [], timeline: [] }
+];
+
+function renderTemplates() {
+  const el = document.getElementById('templatesGrid');
+  el.innerHTML = TEMPLATES.map((t, i) => `
+    <div class="card" style="cursor:pointer;border-top:3px solid ${t.color}" onclick="applyTemplate(${i})">
+      <div class="card-body">
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px">${esc(t.name)}</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.4">${esc(t.desc)}</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">${t.roadmap.length} phases &middot; ${t.roadmap.reduce((a,p)=>a+p.tasks.length,0)} tasks</div>
+      </div>
+    </div>
+  `).join('');
+}
+function applyTemplate(idx) {
+  const t = TEMPLATES[idx];
+  document.getElementById('npWorkstream').value = t.type;
+  openModal('newProjectModal');
+  toast(`Selected ${t.name} template. Fill in project details.`, 'info');
+}
+
+// ── REFRESH ──
+function refreshAll() {
+  renderSidebarProjects();
+  renderDashboard();
+  renderTemplates();
+  if (S.currentProject !== null) renderWorkstream();
+}
+
+// ── EVENTS ──
+document.getElementById('loginBtn').addEventListener('click', handleLogin);
+document.getElementById('loginEmail').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('loginPassword').focus(); });
+document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key==='Enter') handleLogin(); });
+document.getElementById('signOutBtn').addEventListener('click', handleSignOut);
+document.getElementById('noteDate').value = today();
+
+// ── INIT ──
+checkSession();
+</script>
+
+</body>
+</html>
