@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prime Path OS — Consultant Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F4F6F8;
+  --bg-white: #FFFFFF;
+  --bg-sidebar: #1B2A3C;
+  --bg-sidebar-hover: #243447;
+  --bg-sidebar-active: #2C4158;
+  --bg-topbar: #FFFFFF;
+  --border: #E2E8F0;
+  --border-light: #EDF2F7;
+  --border-sidebar: #2C4158;
+  --text: #1A202C;
+  --text-secondary: #4A5568;
+  --text-muted: #A0AEC0;
+  --text-sidebar: #CBD5E0;
+  --text-sidebar-muted: #718096;
+  --teal: #2B8A7E;
+  --teal-light: #E6F7F5;
+  --teal-dark: #1D6960;
+  --teal-bg: rgba(43,138,126,0.08);
+  --green: #38A169;
+  --green-light: #E6F9EF;
+  --amber: #D69E2E;
+  --amber-light: #FEF9E7;
+  --red: #E53E3E;
+  --red-light: #FEE8E7;
+  --blue: #3182CE;
+  --blue-light: #EBF4FF;
+  --purple: #805AD5;
+  --purple-light: #F3EAFF;
+  --orange: #DD6B20;
+  --orange-light: #FFF3E6;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --sidebar-w: 250px;
+  --topbar-h: 50px;
+  --tabbar-h: 42px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E0; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #A0AEC0; }
+button { font-family: var(--font); cursor: pointer; border: none; outline: none; }
+input, textarea, select { font-family: var(--font); outline: none; }
+a { color: var(--teal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── LOGIN ── */
+#login-screen { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1B2A3C 0%, #2B8A7E 100%); }
+#login-screen.hidden { display: none; }
+.login-card { width: 400px; padding: 44px 36px; background: #fff; border-radius: 12px; box-shadow: var(--shadow-lg); }
+.login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+.login-logo .logo-icon { width: 38px; height: 38px; background: var(--teal); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; }
+.login-logo .logo-text { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+.login-logo .logo-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.login-field { margin-bottom: 14px; }
+.login-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+.login-field input { width: 100%; padding: 10px 12px; background: #F7FAFC; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 14px; transition: border-color 0.2s; }
+.login-field input:focus { border-color: var(--teal); }
+.login-btn { width: 100%; padding: 11px; margin-top: 6px; background: var(--teal); color: #fff; font-size: 14px; font-weight: 600; border-radius: var(--radius); transition: background 0.2s; }
+.login-btn:hover { background: var(--teal-dark); }
+.login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-error { color: var(--red); font-size: 12px; margin-top: 10px; min-height: 16px; }
+.login-footer { text-align: center; margin-top: 16px; font-size: 11px; color: var(--text-muted); }
+
+/* ── APP SHELL ── */
+#app-shell { display: none; height: 100vh; }
+#app-shell.active { display: flex; }
+
+/* ── SIDEBAR ── */
+.sidebar { width: var(--sidebar-w); height: 100vh; background: var(--bg-sidebar); display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; }
+.sidebar-header { padding: 14px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-sidebar); }
+.sidebar-header .s-icon { width: 30px; height: 30px; background: var(--teal); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #fff; flex-shrink: 0; }
+.sidebar-header .s-title { font-weight: 700; font-size: 14px; color: #fff; letter-spacing: -0.3px; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 8px; }
+.nav-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-sidebar-muted); padding: 14px 10px 5px; }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: var(--radius); color: var(--text-sidebar); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.12s; }
+.nav-item:hover { background: var(--bg-sidebar-hover); color: #fff; }
+.nav-item.active { background: var(--bg-sidebar-active); color: #fff; }
+.nav-item .ni-icon { width: 16px; text-align: center; flex-shrink: 0; opacity: 0.7; }
+.nav-item .ni-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 8px; }
+.nav-expand { display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: var(--radius); color: var(--text-sidebar); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.12s; }
+.nav-expand:hover { background: var(--bg-sidebar-hover); }
+.nav-expand .arrow { font-size: 10px; transition: transform 0.2s; }
+.nav-expand.open .arrow { transform: rotate(90deg); }
+.nav-tree-children { display: none; padding-left: 8px; }
+.nav-tree-children.open { display: block; }
+.sidebar-footer { padding: 10px 14px; border-top: 1px solid var(--border-sidebar); display: flex; align-items: center; gap: 9px; }
+.sidebar-footer .user-avatar { width: 28px; height: 28px; background: var(--teal); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.sidebar-footer .user-email { font-size: 11px; color: var(--text-sidebar-muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn-signout { padding: 4px 9px; background: transparent; border: 1px solid var(--border-sidebar); color: var(--text-sidebar-muted); font-size: 10px; border-radius: 5px; transition: all 0.15s; }
+.btn-signout:hover { background: rgba(229,62,62,0.15); color: var(--red); border-color: rgba(229,62,62,0.4); }
+
+/* ── MAIN AREA ── */
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { height: var(--topbar-h); padding: 0 24px; display: flex; align-items: center; background: var(--bg-topbar); border-bottom: 1px solid var(--border); gap: 12px; flex-shrink: 0; }
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.breadcrumb-item { color: var(--text-muted); cursor: pointer; }
+.breadcrumb-item:hover { color: var(--teal); }
+.breadcrumb-sep { color: var(--text-muted); font-size: 10px; }
+.breadcrumb-current { color: var(--text); font-weight: 600; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.btn-topbar { padding: 6px 14px; font-size: 12px; font-weight: 600; border-radius: var(--radius); display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+.btn-teal { background: var(--teal); color: #fff; }
+.btn-teal:hover { background: var(--teal-dark); }
+.btn-outline { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-outline:hover { background: var(--bg); }
+
+/* Tab bar */
+.tabbar { height: var(--tabbar-h); padding: 0 24px; display: flex; align-items: stretch; background: var(--bg-topbar); border-bottom: 1px solid var(--border); gap: 0; flex-shrink: 0; }
+.tab-item { padding: 0 16px; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--text-muted); border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.tab-item:hover { color: var(--text-secondary); }
+.tab-item.active { color: var(--teal); border-bottom-color: var(--teal); font-weight: 600; }
+.tab-item .tab-count { font-size: 10px; font-weight: 700; background: var(--bg); color: var(--text-muted); padding: 1px 6px; border-radius: 8px; }
+.tab-item.active .tab-count { background: var(--teal-light); color: var(--teal); }
+
+/* ── CONTENT ── */
+.content-area { flex: 1; overflow-y: auto; padding: 24px; background: var(--bg); }
+.page { display: none; }
+.page.active { display: block; }
+.section-header { margin-bottom: 20px; }
+.section-title { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+.section-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+/* Cards */
+.card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 0; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+.card-body { padding: 18px 20px; }
+.card-header { padding: 14px 20px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.info-banner { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; background: var(--amber-light); border: 1px solid #F6E5A3; border-radius: var(--radius); margin-bottom: 20px; font-size: 12px; color: #92610E; }
+.info-banner .ib-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+/* Stat row */
+.stat-row { display: flex; gap: 0; margin-bottom: 24px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+.stat-cell { flex: 1; padding: 16px 20px; border-right: 1px solid var(--border-light); }
+.stat-cell:last-child { border-right: none; }
+.stat-cell .sc-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-muted); margin-bottom: 4px; }
+.stat-cell .sc-value { font-size: 24px; font-weight: 700; font-family: var(--mono); }
+.stat-cell .sc-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* Buttons */
+.btn { padding: 7px 14px; font-size: 12px; font-weight: 600; border-radius: var(--radius); transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; }
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--teal-dark); }
+.btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--bg); }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.btn-danger { background: var(--red-light); color: var(--red); }
+.btn-danger:hover { background: var(--red); color: #fff; }
+.btn-icon { width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; background: transparent; color: var(--text-muted); border-radius: var(--radius); }
+.btn-icon:hover { background: var(--bg); color: var(--text); }
+
+/* Badges */
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; font-size: 10px; font-weight: 700; border-radius: 4px; letter-spacing: 0.3px; }
+.badge-teal { background: var(--teal-light); color: var(--teal); }
+.badge-green { background: var(--green-light); color: var(--green); }
+.badge-amber { background: var(--amber-light); color: #92610E; }
+.badge-red { background: var(--red-light); color: var(--red); }
+.badge-blue { background: var(--blue-light); color: var(--blue); }
+.badge-purple { background: var(--purple-light); color: var(--purple); }
+.badge-orange { background: var(--orange-light); color: var(--orange); }
+.badge-gray { background: #EDF2F7; color: var(--text-muted); }
+.status-tag { padding: 3px 10px; font-size: 10px; font-weight: 700; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+.st-not-started { background: #EDF2F7; color: #718096; }
+.st-in-progress { background: var(--teal-light); color: var(--teal); }
+.st-waiting-client { background: var(--amber-light); color: #92610E; }
+.st-waiting-lab { background: var(--purple-light); color: var(--purple); }
+.st-blocked { background: var(--red-light); color: var(--red); }
+.st-complete { background: var(--green-light); color: var(--green); }
+.task-tag { padding: 2px 8px; font-size: 10px; font-weight: 600; border-radius: 4px; }
+.tt-plan { background: var(--blue-light); color: var(--blue); }
+.tt-review { background: var(--amber-light); color: #92610E; }
+.tt-doc { background: var(--purple-light); color: var(--purple); }
+.tt-test { background: var(--orange-light); color: var(--orange); }
+.tt-submit { background: var(--teal-light); color: var(--teal); }
+.req-tag { padding: 2px 7px; font-size: 10px; font-weight: 700; border-radius: 3px; }
+.req-required { background: var(--red-light); color: var(--red); }
+.req-optional { background: var(--amber-light); color: #92610E; }
+
+/* Forms */
+.form-group { margin-bottom: 12px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; background: #F7FAFC; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 13px; transition: border-color 0.2s; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--teal); background: #fff; }
+.form-textarea { resize: vertical; min-height: 70px; }
+.form-select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23718096' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+.form-row { display: flex; gap: 12px; }
+.form-row > * { flex: 1; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+.modal-overlay.active { display: flex; }
+.modal { background: #fff; border-radius: var(--radius-lg); width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+.modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.modal-header h3 { font-size: 15px; font-weight: 700; }
+.modal-close { background: transparent; color: var(--text-muted); font-size: 18px; padding: 4px; border-radius: var(--radius); }
+.modal-close:hover { background: var(--bg); color: var(--text); }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Toggle */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-light); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-info .ti-label { font-size: 13px; font-weight: 600; color: var(--text); }
+.toggle-info .ti-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.toggle { width: 38px; height: 22px; background: #CBD5E0; border-radius: 11px; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+.toggle.on { background: var(--teal); }
+.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.15); transition: transform 0.2s; }
+.toggle.on::after { transform: translateX(16px); }
+
+/* Roadmap */
+.rm-phase { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 16px; overflow: hidden; box-shadow: var(--shadow-sm); }
+.rm-phase-header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; cursor: pointer; transition: background 0.12s; }
+.rm-phase-header:hover { background: #FAFBFC; }
+.rm-phase-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.rm-phase-info { flex: 1; }
+.rm-phase-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.rm-phase-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.rm-phase-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.rm-phase-duration { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+.rm-phase-progress { font-size: 11px; font-family: var(--mono); color: var(--text-muted); }
+.rm-phase-body { display: none; border-top: 1px solid var(--border-light); }
+.rm-phase-body.open { display: block; }
+.rm-task { display: flex; align-items: center; gap: 12px; padding: 10px 20px 10px 52px; border-bottom: 1px solid var(--border-light); transition: background 0.1s; }
+.rm-task:last-child { border-bottom: none; }
+.rm-task:hover { background: #FAFBFC; }
+.rm-task-check { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 4px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; font-size: 11px; color: transparent; }
+.rm-task-check.checked { background: var(--teal); border-color: var(--teal); color: #fff; }
+.rm-task-info { flex: 1; min-width: 0; }
+.rm-task-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.rm-task-name.done { text-decoration: line-through; color: var(--text-muted); }
+.rm-task-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.rm-task-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* Checklist */
+.cl-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); padding: 14px 0 6px; }
+.cl-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.cl-item:last-child { border-bottom: none; }
+.cl-item-info { flex: 1; }
+.cl-item-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.cl-item-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+/* Timeline */
+.tl-item { position: relative; padding: 0 0 24px 32px; }
+.tl-item::before { content: ''; position: absolute; left: 9px; top: 12px; bottom: 0; width: 2px; background: var(--border); }
+.tl-item:last-child::before { display: none; }
+.tl-dot { position: absolute; left: 0; top: 6px; width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--bg); z-index: 1; }
+.tl-dot.not-started { background: #CBD5E0; box-shadow: 0 0 0 2px #CBD5E0; }
+.tl-dot.complete { background: var(--green); box-shadow: 0 0 0 2px var(--green); }
+.tl-dot.active { background: var(--teal); box-shadow: 0 0 0 2px var(--teal); }
+.tl-card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 18px; box-shadow: var(--shadow-sm); }
+.tl-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.tl-card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.tl-card-month { font-size: 12px; color: var(--text-muted); font-family: var(--mono); }
+.tl-card-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; }
+.tl-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.tl-tag { padding: 2px 8px; font-size: 10px; font-weight: 500; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary); }
+.tl-check-icon { font-size: 14px; color: var(--green); }
+
+/* Documents, Notes, Actions */
+.doc-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.doc-item:last-child { border-bottom: none; }
+.doc-icon { width: 32px; height: 32px; background: var(--bg); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.doc-info { flex: 1; }
+.doc-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.doc-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.note-item { padding: 14px 18px; border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 10px; background: var(--bg-white); box-shadow: var(--shadow-sm); }
+.note-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.note-title { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+.note-date { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+.note-body { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+.note-footer { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 11px; color: var(--text-muted); }
+.action-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.action-item:last-child { border-bottom: none; }
+.action-info { flex: 1; }
+.action-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.action-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+/* FDA Research */
+.research-entry { padding: 16px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 12px; background: var(--bg-white); box-shadow: var(--shadow-sm); }
+.research-entry-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.research-field { display: flex; gap: 8px; margin-bottom: 6px; font-size: 12px; }
+.research-field .rf-label { font-weight: 600; color: var(--text-secondary); min-width: 120px; flex-shrink: 0; }
+.research-field .rf-value { color: var(--text); }
+.research-links { margin-top: 8px; }
+.research-link { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; }
+.research-notes { margin-top: 8px; padding: 10px 14px; background: var(--bg); border-radius: var(--radius); font-size: 12px; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; }
+
+/* Company Dashboard */
+.co-dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.co-ws-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; background: var(--bg-white); cursor: pointer; transition: all 0.12s; }
+.co-ws-item:hover { border-color: var(--teal); background: var(--teal-bg); }
+.co-milestone { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border-light); font-size: 12px; }
+.co-milestone:last-child { border-bottom: none; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 40px 20px; }
+.empty-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+.empty-desc { font-size: 12px; color: var(--text-muted); }
+
+/* Toast */
+.toast-container { position: fixed; top: 14px; right: 14px; z-index: 2000; display: flex; flex-direction: column; gap: 6px; }
+.toast { padding: 10px 16px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); font-size: 13px; display: flex; align-items: center; gap: 8px; animation: toastIn 0.25s ease-out; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error { border-left: 3px solid var(--red); }
+.toast.info { border-left: 3px solid var(--teal); }
+.expand-btn { font-size: 11px; color: var(--teal); cursor: pointer; font-weight: 600; }
+.expand-btn:hover { text-decoration: underline; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+</style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">PP</div>
+      <div><div class="logo-text">Prime Path OS</div><div class="logo-sub">Consultant Portal</div></div>
+    </div>
+    <div class="login-field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@primepathmedtech.com"></div>
+    <div class="login-field"><label>Password</label><input type="password" id="loginPassword" placeholder="Enter password"></div>
+    <button class="login-btn" id="loginBtn">Sign In</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-footer">Secured by Supabase Auth</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="s-icon">PP</div>
+      <div class="s-title">Prime Path OS</div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <div class="nav-label">Main</div>
+      <div class="nav-item active" data-page="dashboard"><span class="ni-icon">&#9632;</span> Dashboard</div>
+      <div class="nav-item" data-page="action-required"><span class="ni-icon">&#9888;</span> Action Required <span class="ni-badge" id="actionBadge">0</span></div>
+      <div class="nav-label">Companies</div>
+      <div id="sidebarProjects"></div>
+      <div class="nav-label">Tools</div>
+      <div class="nav-item" data-page="fda-research"><span class="ni-icon">&#9906;</span> FDA Research</div>
+      <div class="nav-item" data-page="templates"><span class="ni-icon">&#9881;</span> Templates</div>
+      <div class="nav-label">Settings</div>
+      <div class="nav-item" data-page="settings"><span class="ni-icon">&#9881;</span> Preferences</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <div class="user-email" id="userEmail">--</div>
+      <button class="btn-signout" id="signOutBtn">Sign Out</button>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <div class="topbar">
+      <div class="breadcrumb" id="breadcrumb"><span class="breadcrumb-current">Dashboard</span></div>
+      <div class="topbar-right">
+        <button class="btn-topbar btn-outline" id="btnExport">Export</button>
+        <button class="btn-topbar btn-teal" onclick="openModal('newProjectModal')">+ New Project</button>
+        <button class="btn-topbar btn-outline" onclick="saveState();toast('Saved','success')">Save</button>
+      </div>
+    </div>
+    <div class="tabbar" id="tabbar" style="display:none;">
+      <div class="tab-item active" data-tab="roadmap">Roadmap</div>
+      <div class="tab-item" data-tab="checklist">Checklist <span class="tab-count" id="clCount">0/0</span></div>
+      <div class="tab-item" data-tab="timeline">Timeline</div>
+      <div class="tab-item" data-tab="documents">Documents <span class="tab-count" id="docCount">0</span></div>
+      <div class="tab-item" data-tab="notes">Notes <span class="tab-count" id="noteCount">0</span></div>
+      <div class="tab-item" data-tab="device-setup">Device Setup</div>
+      <div class="tab-item" data-tab="actions">Actions <span class="tab-count" id="actCount">0</span></div>
+    </div>
+    <div class="content-area" id="contentArea">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="section-header"><div class="section-title">Dashboard</div><div class="section-subtitle">Overview of all active consulting projects</div></div>
+        <div class="stat-row">
+          <div class="stat-cell"><div class="sc-label">Active Projects</div><div class="sc-value" id="dStatProjects">0</div></div>
+          <div class="stat-cell"><div class="sc-label">Open Actions</div><div class="sc-value" id="dStatActions" style="color:var(--amber)">0</div></div>
+          <div class="stat-cell"><div class="sc-label">Upcoming Milestones</div><div class="sc-value" id="dStatMilestones" style="color:var(--teal)">0</div></div>
+          <div class="stat-cell"><div class="sc-label">Blocked Items</div><div class="sc-value" id="dStatBlocked" style="color:var(--red)">0</div></div>
+        </div>
+        <div id="dashProjectsList"></div>
+      </div>
+
+      <!-- COMPANY DASHBOARD -->
+      <div class="page" id="page-company">
+        <div class="section-header"><div class="section-title" id="coTitle">Company</div><div class="section-subtitle" id="coSubtitle">Company overview</div></div>
+        <div class="stat-row" id="coStatRow"></div>
+        <div class="co-dash-grid">
+          <div class="card"><div class="card-header"><div class="card-title">Active Workstreams</div></div><div class="card-body" id="coWorkstreams"></div></div>
+          <div class="card"><div class="card-header"><div class="card-title">Upcoming Milestones</div></div><div class="card-body" id="coMilestones"></div></div>
+        </div>
+      </div>
+
+      <!-- WORKSTREAM VIEW -->
+      <div class="page" id="page-workstream">
+        <div class="tab-page active" id="tab-roadmap">
+          <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+            <div><div class="section-title" id="wsTitle">Roadmap</div><div class="section-subtitle">Track progress through all regulatory phases</div></div>
+            <div style="display:flex;gap:8px"><span class="expand-btn" onclick="toggleAllPhases(true)">Expand All</span><span class="expand-btn" onclick="toggleAllPhases(false)">Collapse All</span></div>
+          </div>
+          <div class="stat-row" id="wsStatRow"></div>
+          <div id="roadmapContainer"></div>
+        </div>
+        <div class="tab-page" id="tab-checklist" style="display:none">
+          <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+            <div><div class="section-title">Submission Checklist</div><div class="section-subtitle">Required and recommended documents for a complete submission</div></div>
+            <div id="clCompletionBadge"></div>
+          </div>
+          <div class="card"><div class="card-body" id="checklistContainer"></div></div>
+        </div>
+        <div class="tab-page" id="tab-timeline" style="display:none">
+          <div class="section-header"><div class="section-title">Regulatory Timeline</div><div class="section-subtitle">Estimated milestones across your submission journey</div></div>
+          <div class="info-banner"><span class="ib-icon">&#9888;</span> Timelines are estimates. FDA review times vary. Additional Information requests can extend the review period significantly.</div>
+          <div id="timelineContainer"></div>
+        </div>
+        <div class="tab-page" id="tab-documents" style="display:none">
+          <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+            <div><div class="section-title">Documents</div><div class="section-subtitle">Shared files and links for this project</div></div>
+            <button class="btn btn-primary" onclick="openModal('docModal')">+ Add Document</button>
+          </div>
+          <div class="card"><div class="card-body" id="documentsContainer"></div></div>
+        </div>
+        <div class="tab-page" id="tab-notes" style="display:none">
+          <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+            <div><div class="section-title">Notes &amp; Decisions</div><div class="section-subtitle">Capture key decisions and reasoning for this project</div></div>
+            <button class="btn btn-primary" onclick="openModal('noteModal')">+ Add Note</button>
+          </div>
+          <div id="notesContainer"></div>
+        </div>
+        <div class="tab-page" id="tab-device-setup" style="display:none">
+          <div class="section-header"><div class="section-title">Device Setup</div><div class="section-subtitle">Configure device inputs to customize the roadmap and checklist</div></div>
+          <div class="info-banner"><span class="ib-icon">&#9888;</span> Device inputs control which tasks and checklist items are visible. Set these accurately to reflect your actual device before reviewing the roadmap.</div>
+          <div id="deviceSetupContainer"></div>
+        </div>
+        <div class="tab-page" id="tab-actions" style="display:none">
+          <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+            <div><div class="section-title">Actions</div><div class="section-subtitle">Tasks requiring attention</div></div>
+            <button class="btn btn-primary" onclick="openModal('actionModal')">+ Add Action</button>
+          </div>
+          <div class="card"><div class="card-body" id="actionsContainer"></div></div>
+        </div>
+      </div>
+
+      <!-- FDA RESEARCH -->
+      <div class="page" id="page-fda-research">
+        <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+          <div><div class="section-title">FDA Device Research</div><div class="section-subtitle">Store regulatory intelligence, predicate devices, and FDA submission data</div></div>
+          <button class="btn btn-primary" onclick="openModal('fdaModal')">+ Add Research Entry</button>
+        </div>
+        <div id="fdaResearchList"></div>
+      </div>
+
+      <!-- TEMPLATES -->
+      <div class="page" id="page-templates">
+        <div class="section-header"><div class="section-title">Service Templates</div><div class="section-subtitle">Select a template to auto-populate a new workstream</div></div>
+        <div class="grid-2" id="templatesGrid"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="newProjectModal">
+  <div class="modal">
+    <div class="modal-header"><h3>New Project</h3><button class="modal-close" onclick="closeModal('newProjectModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Company Name</label><input class="form-input" id="npCompany" placeholder="e.g. Acuity Medical"></div>
+      <div class="form-group"><label class="form-label">Device / Product Name</label><input class="form-input" id="npDevice" placeholder="e.g. CardioWatch Pro"></div>
+      <div class="form-group"><label class="form-label">Workstream Type</label>
+        <select class="form-select" id="npWorkstream"><option value="510(k)">510(k) Clearance</option><option value="PMA">PMA Approval</option><option value="De Novo">De Novo Classification</option><option value="EU MDR">EU MDR Compliance</option><option value="QMS">QMS Creation / Maintenance</option><option value="Clinical">Clinical Trial</option><option value="Custom">Custom Workstream</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Assigned Consultant</label><input class="form-input" id="npConsultant" placeholder="e.g. Alex Johnson"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('newProjectModal')">Cancel</button><button class="btn btn-primary" onclick="createProject()">Create Project</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="docModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Add Document</h3><button class="modal-close" onclick="closeModal('docModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Document Name</label><input class="form-input" id="docName" placeholder="e.g. Biocompatibility Report"></div>
+      <div class="form-group"><label class="form-label">URL / Link</label><input class="form-input" id="docUrl" placeholder="https://..."></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="docType"><option>SharePoint</option><option>External URL</option><option>FDA Link</option><option>Google Drive</option><option>Other</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('docModal')">Cancel</button><button class="btn btn-primary" onclick="addDocument()">Add Document</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="noteModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Capture Decision / Note</h3><button class="modal-close" onclick="closeModal('noteModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Situation *</label><input class="form-input" id="noteSituation" placeholder="What is the context or problem?"></div>
+      <div class="form-group"><label class="form-label">Decision *</label><input class="form-input" id="noteDecision" placeholder="What was decided?"></div>
+      <div class="form-group"><label class="form-label">Reasoning</label><textarea class="form-textarea" id="noteReasoning" placeholder="Why was this decision made?"></textarea></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Owner</label><input class="form-input" id="noteOwner" placeholder="e.g. Alex J."></div><div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date" id="noteDate"></div></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('noteModal')">Cancel</button><button class="btn btn-primary" onclick="addNote()">Save Note</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="actionModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Add Action</h3><button class="modal-close" onclick="closeModal('actionModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Action Description</label><input class="form-input" id="actTitle" placeholder="e.g. Upload testing protocol"></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Assignee</label><input class="form-input" id="actAssignee" placeholder="e.g. Alex J."></div><div class="form-group"><label class="form-label">Due Date</label><input class="form-input" type="date" id="actDue"></div></div>
+      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="actStatus"><option value="Not Started">Not Started</option><option value="In Progress">In Progress</option><option value="Waiting on Client">Waiting on Client</option><option value="Waiting on Lab">Waiting on Lab</option><option value="Blocked">Blocked</option><option value="Complete">Complete</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('actionModal')">Cancel</button><button class="btn btn-primary" onclick="addAction()">Add Action</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editTaskModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Edit Task</h3><button class="modal-close" onclick="closeModal('editTaskModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Task Name</label><input class="form-input" id="etName"></div>
+      <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="etDesc"></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Task Type</label><select class="form-select" id="etType"><option value="plan">Plan</option><option value="review">Review</option><option value="doc">Document</option><option value="test">Test</option><option value="submit">Submit</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-select" id="etStatus"><option value="Not Started">Not Started</option><option value="In Progress">In Progress</option><option value="Waiting on Client">Waiting on Client</option><option value="Waiting on Lab">Waiting on Lab</option><option value="Blocked">Blocked</option><option value="Complete">Complete</option></select></div></div>
+      <input type="hidden" id="etPhaseIdx"><input type="hidden" id="etTaskIdx">
+    </div>
+    <div class="modal-footer"><button class="btn btn-danger btn-sm" onclick="deleteTask()">Delete Task</button><div style="flex:1"></div><button class="btn btn-ghost" onclick="closeModal('editTaskModal')">Cancel</button><button class="btn btn-primary" onclick="saveTaskEdit()">Save</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addTaskModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Add Task</h3><button class="modal-close" onclick="closeModal('addTaskModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Task Name</label><input class="form-input" id="atName" placeholder="e.g. Review special controls"></div>
+      <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="atDesc" placeholder="Brief description"></div>
+      <div class="form-group"><label class="form-label">Task Type</label><select class="form-select" id="atType"><option value="plan">Plan</option><option value="review">Review</option><option value="doc">Document</option><option value="test">Test</option><option value="submit">Submit</option></select></div>
+      <input type="hidden" id="atPhaseIdx">
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('addTaskModal')">Cancel</button><button class="btn btn-primary" onclick="addTaskToPhase()">Add Task</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addPhaseModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Add Phase</h3><button class="modal-close" onclick="closeModal('addPhaseModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Phase Name</label><input class="form-input" id="apName" placeholder="e.g. Testing & Verification"></div>
+      <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="apDesc" placeholder="Brief description"></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Duration</label><input class="form-input" id="apDuration" placeholder="e.g. 6-8 wks"></div><div class="form-group"><label class="form-label">Color</label><select class="form-select" id="apColor"><option value="#2B8A7E">Teal</option><option value="#3182CE">Blue</option><option value="#38A169">Green</option><option value="#D69E2E">Amber</option><option value="#E53E3E">Red</option><option value="#805AD5">Purple</option></select></div></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('addPhaseModal')">Cancel</button><button class="btn btn-primary" onclick="addPhase()">Add Phase</button></div>
+  </div>
+</div>
+
+<!-- FDA Research Modal -->
+<div class="modal-overlay" id="fdaModal">
+  <div class="modal" style="width:560px">
+    <div class="modal-header"><h3>Add FDA Research Entry</h3><button class="modal-close" onclick="closeModal('fdaModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Device / Product Name</label><input class="form-input" id="fdaName" placeholder="e.g. CardioWatch Pro"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Product Code</label><input class="form-input" id="fdaProductCode" placeholder="e.g. DQO"></div>
+        <div class="form-group"><label class="form-label">Regulation Number</label><input class="form-input" id="fdaRegNum" placeholder="e.g. 870.2345"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">K Number</label><input class="form-input" id="fdaKNum" placeholder="e.g. K213456"></div>
+        <div class="form-group"><label class="form-label">Classification</label><select class="form-select" id="fdaClass"><option>Class I</option><option>Class II</option><option>Class III</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Predicate Devices (one per line)</label><textarea class="form-textarea" id="fdaPredicates" placeholder="K210001 - Device A - Company X&#10;K200002 - Device B - Company Y"></textarea></div>
+      <div class="form-group"><label class="form-label">FDA Links (one per line)</label><textarea class="form-textarea" id="fdaLinks" placeholder="https://www.accessdata.fda.gov/..."></textarea></div>
+      <div class="form-group"><label class="form-label">Research Notes</label><textarea class="form-textarea" id="fdaNotes" rows="4" placeholder="Summary notes, observations, regulatory strategy considerations..."></textarea></div>
+      <div class="form-group"><label class="form-label">Associated Company</label><select class="form-select" id="fdaCompany"><option value="">None</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('fdaModal')">Cancel</button><button class="btn btn-primary" onclick="addFdaEntry()">Save Entry</button></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://ymdjaqikfvnpdaookcpw.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltZGphcWlrZnZucGRhb29rY3B3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NzgyMjksImV4cCI6MjA4ODA1NDIyOX0.DsIw9AQHDSI9oFGiY2b581ZFCDeEe3ZWZlEnFxlrpGk';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const S={user:null,projects:[],fdaResearch:[],currentProject:null,currentTab:'roadmap',currentPage:'dashboard',currentCompany:null};
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function today(){return new Date().toISOString().slice(0,10)}
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function toast(m,t='info'){const c=document.getElementById('toastContainer'),e=document.createElement('div');e.className=`toast ${t}`;e.textContent=m;c.appendChild(e);setTimeout(()=>{e.style.opacity='0';e.style.transition='opacity 0.3s';setTimeout(()=>e.remove(),300)},3000)}
+function saveState(){try{localStorage.setItem('ppos_v3',JSON.stringify({projects:S.projects,fdaResearch:S.fdaResearch}))}catch(e){}}
+function loadState(){try{const d=JSON.parse(localStorage.getItem('ppos_v3'));if(d){S.projects=d.projects||[];S.fdaResearch=d.fdaResearch||[]}}catch(e){}}
+function openModal(id){document.getElementById(id).classList.add('active')}
+function closeModal(id){document.getElementById(id).classList.remove('active')}
+document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('active')})});
+function statusClass(s){return{'Not Started':'st-not-started','In Progress':'st-in-progress','Waiting on Client':'st-waiting-client','Waiting on Lab':'st-waiting-lab','Blocked':'st-blocked','Complete':'st-complete'}[s]||'st-not-started'}
+function statusTag(s){return`<span class="status-tag ${statusClass(s)}">${esc(s)}</span>`}
+function taskTag(t){return`<span class="task-tag ${({plan:'tt-plan',review:'tt-review',doc:'tt-doc',test:'tt-test',submit:'tt-submit'})[t]||'tt-plan'}">${esc(t)}</span>`}
+function reqTag(r){return r==='required'?'<span class="req-tag req-required">required</span>':'<span class="req-tag req-optional">optional</span>'}
+
+// AUTH
+async function handleLogin(){const email=document.getElementById('loginEmail').value.trim(),pass=document.getElementById('loginPassword').value,err=document.getElementById('loginError'),btn=document.getElementById('loginBtn');err.textContent='';if(!email||!pass){err.textContent='Please enter email and password.';return}btn.disabled=true;btn.textContent='Signing in...';try{let{data,error}=await sb.auth.signInWithPassword({email,password:pass});if(error&&error.message.includes('Invalid login')){const r=await sb.auth.signUp({email,password:pass});if(r.error){err.textContent=r.error.message;btn.disabled=false;btn.textContent='Sign In';return}data=r.data}else if(error){err.textContent=error.message;btn.disabled=false;btn.textContent='Sign In';return}S.user=data.user||data.session?.user;showApp();toast('Signed in','success')}catch(e){err.textContent='Connection error';btn.disabled=false;btn.textContent='Sign In'}}
+async function handleSignOut(){await sb.auth.signOut();S.user=null;document.getElementById('app-shell').classList.remove('active');document.getElementById('login-screen').classList.remove('hidden');document.getElementById('loginBtn').disabled=false;document.getElementById('loginBtn').textContent='Sign In'}
+function showApp(){document.getElementById('login-screen').classList.add('hidden');document.getElementById('app-shell').classList.add('active');const em=S.user?.email||'User';document.getElementById('userEmail').textContent=em;document.getElementById('userAvatar').textContent=em.charAt(0).toUpperCase();loadState();refreshAll()}
+async function checkSession(){const{data:{session}}=await sb.auth.getSession();if(session?.user){S.user=session.user;showApp()}}
+
+// NAV
+function navigateTo(page,projectIdx,companyName){
+  S.currentPage=page;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  if(page==='workstream'&&projectIdx!==undefined){S.currentProject=projectIdx;S.currentTab='roadmap';document.getElementById('page-workstream').classList.add('active');document.getElementById('tabbar').style.display='flex';setActiveTab('roadmap');updateBreadcrumb();renderWorkstream()}
+  else if(page==='company'&&companyName){S.currentCompany=companyName;S.currentProject=null;document.getElementById('page-company').classList.add('active');document.getElementById('tabbar').style.display='none';updateBreadcrumb();renderCompanyDash(companyName)}
+  else{S.currentProject=null;S.currentCompany=null;const el=document.getElementById(`page-${page}`);if(el)el.classList.add('active');document.getElementById('tabbar').style.display='none';updateBreadcrumb();if(page==='dashboard')renderDashboard();if(page==='templates')renderTemplates();if(page==='fda-research')renderFdaResearch()}
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));const ni=document.querySelector(`.nav-item[data-page="${page}"]`);if(ni)ni.classList.add('active')
+}
+function updateBreadcrumb(){const bc=document.getElementById('breadcrumb');if(S.currentProject!==null&&S.projects[S.currentProject]){const p=S.projects[S.currentProject];bc.innerHTML=`<span class="breadcrumb-item" onclick="navigateTo('dashboard')">Dashboard</span><span class="breadcrumb-sep">&#9656;</span><span class="breadcrumb-item" onclick="navigateTo('company',null,'${esc(p.company)}')">${esc(p.company)}</span><span class="breadcrumb-sep">&#9656;</span><span class="breadcrumb-current">${esc(p.device)} &mdash; ${esc(p.workstream)}</span>`}else if(S.currentCompany){bc.innerHTML=`<span class="breadcrumb-item" onclick="navigateTo('dashboard')">Dashboard</span><span class="breadcrumb-sep">&#9656;</span><span class="breadcrumb-current">${esc(S.currentCompany)}</span>`}else{bc.innerHTML=`<span class="breadcrumb-current">${S.currentPage==='dashboard'?'Dashboard':S.currentPage==='templates'?'Templates':S.currentPage==='fda-research'?'FDA Research':'Settings'}</span>`}}
+document.querySelectorAll('.nav-item[data-page]').forEach(i=>{i.addEventListener('click',()=>navigateTo(i.dataset.page))});
+document.querySelectorAll('.tab-item[data-tab]').forEach(t=>{t.addEventListener('click',()=>setActiveTab(t.dataset.tab))});
+function setActiveTab(n){S.currentTab=n;document.querySelectorAll('.tab-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===n));document.querySelectorAll('.tab-page').forEach(p=>p.style.display='none');const p=document.getElementById(`tab-${n}`);if(p)p.style.display='block';renderWorkstream()}
+
+// SIDEBAR
+function renderSidebarProjects(){
+  const el=document.getElementById('sidebarProjects');if(!S.projects.length){el.innerHTML='<div style="padding:6px 12px;font-size:11px;color:var(--text-sidebar-muted)">No projects yet</div>';return}
+  const companies={};S.projects.forEach((p,i)=>{if(!companies[p.company])companies[p.company]=[];companies[p.company].push({...p,idx:i})});
+  el.innerHTML=Object.entries(companies).map(([comp,projs])=>`
+    <div class="nav-expand" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="arrow">&#9656;</span> ${esc(comp)}</div>
+    <div class="nav-tree-children">
+      <div class="nav-item" onclick="navigateTo('company',null,'${esc(comp)}')" style="padding-left:20px;font-size:11px;color:var(--text-sidebar-muted)"><span class="ni-icon" style="font-size:8px">&#9632;</span> Overview</div>
+      ${projs.map(p=>`<div class="nav-item" onclick="navigateTo('workstream',${p.idx})" style="padding-left:24px"><span class="ni-icon" style="font-size:8px">&#9679;</span> ${esc(p.device)} &mdash; ${esc(p.workstream)}</div>`).join('')}
+    </div>
+  `).join('')
+}
+
+// COMPANY DASHBOARD
+function renderCompanyDash(companyName){
+  const projs=S.projects.filter(p=>p.company===companyName);
+  document.getElementById('coTitle').textContent=companyName;
+  document.getElementById('coSubtitle').textContent=`${projs.length} active workstream${projs.length!==1?'s':''} across ${[...new Set(projs.map(p=>p.device))].length} product${[...new Set(projs.map(p=>p.device))].length!==1?'s':''}`;
+  const totalTasks=projs.reduce((a,p)=>a+p.roadmap.reduce((b,ph)=>b+ph.tasks.length,0),0);
+  const doneTasks=projs.reduce((a,p)=>a+p.roadmap.reduce((b,ph)=>b+ph.tasks.filter(t=>t.status==='Complete').length,0),0);
+  const pct=totalTasks?Math.round((doneTasks/totalTasks)*100):0;
+  const consultants=[...new Set(projs.map(p=>p.consultant))];
+  document.getElementById('coStatRow').innerHTML=`
+    <div class="stat-cell"><div class="sc-label">Products</div><div class="sc-value">${[...new Set(projs.map(p=>p.device))].length}</div></div>
+    <div class="stat-cell"><div class="sc-label">Workstreams</div><div class="sc-value">${projs.length}</div></div>
+    <div class="stat-cell"><div class="sc-label">Overall Progress</div><div class="sc-value" style="color:var(--teal)">${pct}%</div></div>
+    <div class="stat-cell"><div class="sc-label">Consultants</div><div class="sc-value">${consultants.length}</div><div class="sc-sub">${consultants.slice(0,3).join(', ')}</div></div>`;
+  // Workstreams
+  document.getElementById('coWorkstreams').innerHTML=projs.length?projs.map((p,i)=>{
+    const idx=S.projects.indexOf(p);const tt=p.roadmap.reduce((a,ph)=>a+ph.tasks.length,0);const dt=p.roadmap.reduce((a,ph)=>a+ph.tasks.filter(t=>t.status==='Complete').length,0);const pc=tt?Math.round((dt/tt)*100):0;
+    return`<div class="co-ws-item" onclick="navigateTo('workstream',${idx})"><div style="flex:1"><div style="font-weight:600;font-size:13px">${esc(p.device)} &mdash; ${esc(p.workstream)}</div><div style="font-size:11px;color:var(--text-muted)">${esc(p.consultant)}</div></div><div style="font-family:var(--mono);font-weight:700;color:var(--teal)">${pc}%</div>${statusTag(p.status)}</div>`
+  }).join(''):'<div class="empty-state"><div class="empty-title">No workstreams</div></div>';
+  // Milestones
+  const milestones=[];projs.forEach(p=>{p.roadmap.forEach(ph=>{ph.tasks.filter(t=>t.status!=='Complete').slice(0,2).forEach(t=>{milestones.push({task:t.name,device:p.device,ws:p.workstream})})})});
+  document.getElementById('coMilestones').innerHTML=milestones.length?milestones.slice(0,8).map(m=>`<div class="co-milestone"><div style="flex:1"><div style="font-size:12px;font-weight:500">${esc(m.task)}</div><div style="font-size:10px;color:var(--text-muted)">${esc(m.device)} &mdash; ${esc(m.ws)}</div></div></div>`).join(''):'<div class="empty-state"><div class="empty-title">No upcoming milestones</div></div>'
+}
+
+// CREATE PROJECT
+function createProject(){const company=document.getElementById('npCompany').value.trim(),device=document.getElementById('npDevice').value.trim(),ws=document.getElementById('npWorkstream').value,consultant=document.getElementById('npConsultant').value.trim();if(!company||!device){toast('Company and device name required','error');return}const template=TEMPLATES.find(t=>t.type===ws);const project={id:uid(),company,device,workstream:ws,consultant:consultant||'Unassigned',status:'Active',created:today(),roadmap:template?JSON.parse(JSON.stringify(template.roadmap)):[],checklist:template?JSON.parse(JSON.stringify(template.checklist)):[],timeline:template?JSON.parse(JSON.stringify(template.timeline)):[],documents:[],notes:[],actions:[],deviceSetup:{name:device,productCode:'',classification:'Class II - Moderate Risk',pathway:ws,intendedUse:'',characteristics:{containsSoftware:false,cybersecurity:false,sterile:false,implantable:false,electricallyPowered:false,reusable:false,predicateKnown:false,qsubRequired:false},patientContact:{type:'No Patient Contact',duration:'Limited (<24 hrs)'}}};S.projects.push(project);saveState();refreshAll();closeModal('newProjectModal');document.getElementById('npCompany').value='';document.getElementById('npDevice').value='';toast('Project created','success');navigateTo('workstream',S.projects.length-1)}
+
+// DASHBOARD
+function renderDashboard(){document.getElementById('dStatProjects').textContent=S.projects.length;let ta=0,tm=0,tb=0;S.projects.forEach(p=>{ta+=p.actions.filter(a=>a.status!=='Complete').length;p.roadmap.forEach(ph=>{tm+=ph.tasks.filter(t=>t.status!=='Complete').length;tb+=ph.tasks.filter(t=>t.status==='Blocked').length});tb+=p.actions.filter(a=>a.status==='Blocked').length});document.getElementById('dStatActions').textContent=ta;document.getElementById('dStatMilestones').textContent=tm;document.getElementById('dStatBlocked').textContent=tb;document.getElementById('actionBadge').textContent=ta;
+const el=document.getElementById('dashProjectsList');if(!S.projects.length){el.innerHTML='<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">No projects yet</div><div class="empty-desc">Create your first project to get started.</div></div></div></div>';return}
+el.innerHTML=S.projects.map((p,i)=>{const tt=p.roadmap.reduce((a,ph)=>a+ph.tasks.length,0),dt=p.roadmap.reduce((a,ph)=>a+ph.tasks.filter(t=>t.status==='Complete').length,0),pct=tt?Math.round((dt/tt)*100):0,oa=p.actions.filter(a=>a.status!=='Complete').length;return`<div class="card" style="cursor:pointer" onclick="navigateTo('workstream',${i})"><div class="card-body" style="display:flex;align-items:center;gap:16px"><div style="flex:1"><div style="font-size:14px;font-weight:700">${esc(p.company)} &mdash; ${esc(p.device)} &mdash; ${esc(p.workstream)}</div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Consultant: ${esc(p.consultant)} &middot; Created: ${p.created}</div></div><div style="text-align:center;min-width:60px"><div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--teal)">${pct}%</div><div style="font-size:10px;color:var(--text-muted)">Progress</div></div><div style="text-align:center;min-width:50px"><div style="font-size:20px;font-weight:700;font-family:var(--mono)">${dt}</div><div style="font-size:10px;color:var(--text-muted)">of ${tt}</div></div><div style="text-align:center;min-width:50px"><div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--amber)">${oa}</div><div style="font-size:10px;color:var(--text-muted)">actions</div></div>${statusTag(p.status)}</div></div>`}).join('')}
+
+// WORKSTREAM
+function getProject(){return S.currentProject!==null?S.projects[S.currentProject]:null}
+function renderWorkstream(){const p=getProject();if(!p)return;const tt=p.roadmap.reduce((a,ph)=>a+ph.tasks.length,0),dt=p.roadmap.reduce((a,ph)=>a+ph.tasks.filter(t=>t.status==='Complete').length,0),clT=p.checklist.reduce((a,s)=>a+s.items.length,0),clD=p.checklist.reduce((a,s)=>a+s.items.filter(i=>i.checked).length,0);document.getElementById('clCount').textContent=`${clD}/${clT}`;document.getElementById('docCount').textContent=p.documents.length;document.getElementById('noteCount').textContent=p.notes.length;document.getElementById('actCount').textContent=p.actions.filter(a=>a.status!=='Complete').length;const pct=tt?Math.round((dt/tt)*100):0;document.getElementById('wsTitle').innerHTML=`${esc(p.device)} &mdash; ${esc(p.workstream)}`;document.getElementById('wsStatRow').innerHTML=`<div class="stat-cell"><div class="sc-label">Progress</div><div class="sc-value">${pct}%</div><div class="sc-sub">Phase ${getCurrentPhase(p)}</div></div><div class="stat-cell"><div class="sc-label">Tasks Done</div><div class="sc-value">${dt}</div><div class="sc-sub">of ${tt} tasks</div></div><div class="stat-cell"><div class="sc-label">Est. Duration</div><div class="sc-value" style="font-size:18px">~12</div><div class="sc-sub">months</div></div><div class="stat-cell"><div class="sc-label">Actions</div><div class="sc-value" style="color:var(--amber)">${p.actions.filter(a=>a.status!=='Complete').length}</div><div class="sc-sub">need attention</div></div>`;
+if(S.currentTab==='roadmap')renderRoadmap(p);if(S.currentTab==='checklist')renderChecklist(p);if(S.currentTab==='timeline')renderTimeline(p);if(S.currentTab==='documents')renderDocuments(p);if(S.currentTab==='notes')renderNotes(p);if(S.currentTab==='device-setup')renderDeviceSetup(p);if(S.currentTab==='actions')renderActions(p)}
+function getCurrentPhase(p){for(let i=0;i<p.roadmap.length;i++){if(!p.roadmap[i].tasks.every(t=>t.status==='Complete'))return i+1}return p.roadmap.length}
+
+// ROADMAP
+function renderRoadmap(p){const el=document.getElementById('roadmapContainer');if(!p.roadmap.length){el.innerHTML='<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">No roadmap phases</div></div></div></div><button class="btn btn-primary" onclick="openModal(\'addPhaseModal\')">+ Add Phase</button>';return}
+el.innerHTML=p.roadmap.map((ph,pi)=>{const dn=ph.tasks.filter(t=>t.status==='Complete').length,tl=ph.tasks.length,ad=tl>0&&dn===tl,ip=ph.tasks.some(t=>t.status==='In Progress'),ps=ad?'Complete':ip?'In Progress':'Not Started';return`<div class="rm-phase"><div class="rm-phase-header" onclick="togglePhase(${pi})"><div class="rm-phase-num" style="background:${ph.color||'var(--teal)'}">#${pi+1}</div><div class="rm-phase-info"><div class="rm-phase-name">${esc(ph.name)}</div><div class="rm-phase-desc">${esc(ph.desc||'')}</div></div><div class="rm-phase-meta"><span class="rm-phase-duration">${esc(ph.duration||'')}</span>${statusTag(ps)}<span class="rm-phase-progress">${dn}/${tl}</span><span style="font-size:10px;color:var(--text-muted)">&#9662;</span></div></div><div class="rm-phase-body" id="phaseBody-${pi}">${ph.tasks.map((t,ti)=>`<div class="rm-task"><div class="rm-task-check ${t.status==='Complete'?'checked':''}" onclick="toggleTask(${pi},${ti})">&#10003;</div><div class="rm-task-info"><div class="rm-task-name ${t.status==='Complete'?'done':''}">${esc(t.name)}</div><div class="rm-task-desc">${esc(t.desc||'')}</div></div><div class="rm-task-right">${taskTag(t.type||'plan')}<button class="btn-icon" onclick="openEditTask(${pi},${ti})">&#9998;</button></div></div>`).join('')}<div style="padding:8px 20px 12px 52px"><button class="btn btn-sm btn-ghost" onclick="openAddTask(${pi})">+ Add Task</button></div></div></div>`}).join('')+'<div style="margin-top:12px"><button class="btn btn-primary" onclick="openModal(\'addPhaseModal\')">+ Add Phase</button></div>'}
+function togglePhase(pi){const el=document.getElementById(`phaseBody-${pi}`);if(el)el.classList.toggle('open')}
+function toggleAllPhases(o){document.querySelectorAll('.rm-phase-body').forEach(el=>{if(o)el.classList.add('open');else el.classList.remove('open')})}
+function toggleTask(pi,ti){const p=getProject();if(!p)return;const t=p.roadmap[pi]?.tasks[ti];if(t){t.status=t.status==='Complete'?'Not Started':'Complete';saveState();renderWorkstream()}}
+function openEditTask(pi,ti){const p=getProject();if(!p)return;const t=p.roadmap[pi]?.tasks[ti];if(!t)return;document.getElementById('etName').value=t.name;document.getElementById('etDesc').value=t.desc||'';document.getElementById('etType').value=t.type||'plan';document.getElementById('etStatus').value=t.status||'Not Started';document.getElementById('etPhaseIdx').value=pi;document.getElementById('etTaskIdx').value=ti;openModal('editTaskModal')}
+function saveTaskEdit(){const p=getProject();if(!p)return;const pi=+document.getElementById('etPhaseIdx').value,ti=+document.getElementById('etTaskIdx').value,t=p.roadmap[pi]?.tasks[ti];if(!t)return;t.name=document.getElementById('etName').value.trim()||t.name;t.desc=document.getElementById('etDesc').value.trim();t.type=document.getElementById('etType').value;t.status=document.getElementById('etStatus').value;saveState();renderWorkstream();closeModal('editTaskModal');toast('Task updated','success')}
+function deleteTask(){const p=getProject();if(!p)return;if(!confirm('Delete this task?'))return;p.roadmap[+document.getElementById('etPhaseIdx').value].tasks.splice(+document.getElementById('etTaskIdx').value,1);saveState();renderWorkstream();closeModal('editTaskModal')}
+function openAddTask(pi){document.getElementById('atPhaseIdx').value=pi;document.getElementById('atName').value='';document.getElementById('atDesc').value='';openModal('addTaskModal')}
+function addTaskToPhase(){const p=getProject();if(!p)return;const n=document.getElementById('atName').value.trim();if(!n){toast('Task name required','error');return}p.roadmap[+document.getElementById('atPhaseIdx').value].tasks.push({name:n,desc:document.getElementById('atDesc').value.trim(),type:document.getElementById('atType').value,status:'Not Started'});saveState();renderWorkstream();closeModal('addTaskModal');toast('Task added','success')}
+function addPhase(){const p=getProject();if(!p)return;const n=document.getElementById('apName').value.trim();if(!n){toast('Phase name required','error');return}p.roadmap.push({name:n,desc:document.getElementById('apDesc').value.trim(),duration:document.getElementById('apDuration').value.trim(),color:document.getElementById('apColor').value,tasks:[]});saveState();renderWorkstream();closeModal('addPhaseModal');toast('Phase added','success')}
+
+// CHECKLIST
+function renderChecklist(p){const el=document.getElementById('checklistContainer'),clT=p.checklist.reduce((a,s)=>a+s.items.length,0),clD=p.checklist.reduce((a,s)=>a+s.items.filter(i=>i.checked).length,0);document.getElementById('clCompletionBadge').innerHTML=`<span class="badge badge-teal">${clD} / ${clT} complete</span>`;if(!p.checklist.length){el.innerHTML='<div class="empty-state"><div class="empty-title">No checklist items</div></div>';return}el.innerHTML=p.checklist.map((s,si)=>`<div class="cl-section-title">${esc(s.section)}</div>${s.items.map((it,ii)=>`<div class="cl-item"><div class="rm-task-check ${it.checked?'checked':''}" onclick="toggleCL(${si},${ii})">&#10003;</div><div class="cl-item-info"><div class="cl-item-name" style="${it.checked?'text-decoration:line-through;color:var(--text-muted)':''}">${esc(it.name)}</div><div class="cl-item-desc">${esc(it.desc||'')}</div></div>${it.req?reqTag(it.req):''}</div>`).join('')}`).join('')}
+function toggleCL(si,ii){const p=getProject();if(!p)return;p.checklist[si].items[ii].checked=!p.checklist[si].items[ii].checked;saveState();renderWorkstream()}
+
+// TIMELINE
+function renderTimeline(p){const el=document.getElementById('timelineContainer');if(!p.timeline.length){el.innerHTML='<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">No timeline entries</div></div></div></div>';return}el.innerHTML=p.timeline.map(t=>{const dc=t.status==='Complete'?'complete':t.status==='Active'||t.status==='In Progress'?'active':'not-started';return`<div class="tl-item"><div class="tl-dot ${dc}"></div><div class="tl-card"><div class="tl-card-header"><div class="tl-card-title">${esc(t.name)}</div><div style="display:flex;align-items:center;gap:8px"><span class="tl-card-month">${esc(t.month||'')}</span>${t.status==='Complete'?'<span class="tl-check-icon">&#10003;</span>':''}${t.status&&t.status!=='Complete'?statusTag(t.status):''}</div></div><div class="tl-card-desc">${esc(t.desc||'')}</div>${t.tags?.length?`<div class="tl-tags">${t.tags.map(tg=>`<span class="tl-tag">${esc(tg)}</span>`).join('')}</div>`:''}</div></div>`}).join('')}
+
+// DOCUMENTS
+function renderDocuments(p){const el=document.getElementById('documentsContainer');if(!p.documents.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">&#128196;</div><div class="empty-title">No documents yet</div><div class="empty-desc">Add SharePoint links, files, or external URLs to track project documents.</div></div>';return}el.innerHTML=p.documents.map((d,i)=>`<div class="doc-item"><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-name">${d.url?`<a href="${esc(d.url)}" target="_blank">${esc(d.name)}</a>`:esc(d.name)}</div><div class="doc-meta">${esc(d.type||'Document')} &middot; ${d.date||''}</div></div><button class="btn-icon" onclick="deleteDoc(${i})">&#10005;</button></div>`).join('')}
+function addDocument(){const p=getProject();if(!p)return;const n=document.getElementById('docName').value.trim();if(!n){toast('Name required','error');return}p.documents.push({name:n,url:document.getElementById('docUrl').value.trim(),type:document.getElementById('docType').value,date:today()});saveState();renderWorkstream();closeModal('docModal');toast('Document added','success');document.getElementById('docName').value='';document.getElementById('docUrl').value=''}
+function deleteDoc(i){const p=getProject();if(!p)return;p.documents.splice(i,1);saveState();renderWorkstream()}
+
+// NOTES
+function renderNotes(p){const el=document.getElementById('notesContainer');if(!p.notes.length){el.innerHTML='<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">No notes yet</div></div></div></div>';return}el.innerHTML=p.notes.map((n,i)=>`<div class="note-item"><div class="note-header"><div class="note-title">${esc(n.situation)}</div><span class="note-date">${n.date||''}</span><button class="btn-icon" onclick="deleteNote(${i})">&#10005;</button></div><div style="font-size:12px;color:var(--text);font-weight:600;margin-bottom:4px">Decision: ${esc(n.decision)}</div>${n.reasoning?`<div class="note-body">${esc(n.reasoning)}</div>`:''}<div class="note-footer">Owner: ${esc(n.owner||'--')}</div></div>`).join('')}
+function addNote(){const p=getProject();if(!p)return;const s=document.getElementById('noteSituation').value.trim(),d=document.getElementById('noteDecision').value.trim();if(!s||!d){toast('Situation and Decision required','error');return}p.notes.unshift({situation:s,decision:d,reasoning:document.getElementById('noteReasoning').value.trim(),owner:document.getElementById('noteOwner').value.trim(),date:document.getElementById('noteDate').value||today()});saveState();renderWorkstream();closeModal('noteModal');toast('Note saved','success');document.getElementById('noteSituation').value='';document.getElementById('noteDecision').value='';document.getElementById('noteReasoning').value=''}
+function deleteNote(i){const p=getProject();if(!p)return;p.notes.splice(i,1);saveState();renderWorkstream()}
+
+// ACTIONS
+function renderActions(p){const el=document.getElementById('actionsContainer');if(!p.actions.length){el.innerHTML='<div class="empty-state"><div class="empty-title">No actions yet</div></div>';return}el.innerHTML=p.actions.map((a,i)=>`<div class="action-item"><div class="rm-task-check ${a.status==='Complete'?'checked':''}" onclick="toggleAction(${i})">&#10003;</div><div class="action-info"><div class="action-name" style="${a.status==='Complete'?'text-decoration:line-through;color:var(--text-muted)':''}">${esc(a.title)}</div><div class="action-meta">Assignee: ${esc(a.assignee||'--')} &middot; Due: ${a.due||'--'}</div></div>${statusTag(a.status)}<button class="btn-icon" onclick="deleteAction(${i})">&#10005;</button></div>`).join('')}
+function addAction(){const p=getProject();if(!p)return;const t=document.getElementById('actTitle').value.trim();if(!t){toast('Description required','error');return}p.actions.push({title:t,assignee:document.getElementById('actAssignee').value.trim(),due:document.getElementById('actDue').value,status:document.getElementById('actStatus').value});saveState();renderWorkstream();closeModal('actionModal');toast('Action added','success');document.getElementById('actTitle').value=''}
+function toggleAction(i){const p=getProject();if(!p)return;p.actions[i].status=p.actions[i].status==='Complete'?'Not Started':'Complete';saveState();renderWorkstream()}
+function deleteAction(i){const p=getProject();if(!p)return;p.actions.splice(i,1);saveState();renderWorkstream()}
+
+// DEVICE SETUP
+function renderDeviceSetup(p){const ds=p.deviceSetup,el=document.getElementById('deviceSetupContainer');el.innerHTML=`<div class="card"><div class="card-header"><div class="card-title">Device Identification</div></div><div class="card-body"><div class="form-row"><div class="form-group"><label class="form-label">Device Name</label><input class="form-input" value="${esc(ds.name)}" onchange="updateDS(this,'name')"></div><div class="form-group"><label class="form-label">FDA Product Code</label><input class="form-input" value="${esc(ds.productCode)}" onchange="updateDS(this,'productCode')"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Device Classification</label><select class="form-select" onchange="updateDS(this,'classification')"><option ${ds.classification==='Class I - Low Risk'?'selected':''}>Class I - Low Risk</option><option ${ds.classification==='Class II - Moderate Risk'?'selected':''}>Class II - Moderate Risk</option><option ${ds.classification==='Class III - High Risk'?'selected':''}>Class III - High Risk</option></select></div><div class="form-group"><label class="form-label">Submission Pathway</label><select class="form-select" onchange="updateDS(this,'pathway')"><option ${ds.pathway==='510(k)'||ds.pathway==='Traditional 510(k)'?'selected':''}>Traditional 510(k)</option><option ${ds.pathway==='Special 510(k)'?'selected':''}>Special 510(k)</option><option ${ds.pathway==='PMA'?'selected':''}>PMA</option><option ${ds.pathway==='De Novo'?'selected':''}>De Novo</option></select></div></div><div class="form-group"><label class="form-label">Intended Use</label><textarea class="form-textarea" onchange="updateDS(this,'intendedUse')" placeholder="Describe the medical purpose...">${esc(ds.intendedUse)}</textarea></div></div></div><div class="card"><div class="card-header"><div class="card-title">Device Characteristics (rules engine)</div><div style="font-size:11px;color:var(--text-muted)">Controls which tasks appear in the roadmap</div></div><div class="card-body">${Object.entries({containsSoftware:['Contains Software','Embedded firmware, standalone software, or SaMD'],cybersecurity:['Cybersecurity Relevant','Network-connected, USB, or cloud-connected device'],sterile:['Sterile Device','Device is labeled sterile or requires sterilization validation'],implantable:['Implantable Device','Intended for permanent or temporary implantation'],electricallyPowered:['Electrically Powered','Requires IEC 60601-1 electrical safety testing'],reusable:['Reusable / Reprocessed','Intended to be cleaned and reused by healthcare provider'],predicateKnown:['Predicate Device Known','A suitable predicate has already been identified'],qsubRequired:['Q-Sub Meeting Required','Pre-submission meeting with FDA is warranted']}).map(([k,[l,d]])=>`<div class="toggle-row"><div class="toggle-info"><div class="ti-label">${l}</div><div class="ti-desc">${d}</div></div><div class="toggle ${ds.characteristics[k]?'on':''}" onclick="toggleChar(this,'${k}')"></div></div>`).join('')}</div></div><div class="card"><div class="card-header"><div class="card-title">Patient Contact</div></div><div class="card-body"><div class="form-row"><div class="form-group"><label class="form-label">Contact Type</label><select class="form-select" onchange="updatePC(this,'type')"><option ${ds.patientContact.type==='No Patient Contact'?'selected':''}>No Patient Contact</option><option ${ds.patientContact.type==='Surface Contact'?'selected':''}>Surface Contact</option><option ${ds.patientContact.type==='External Communicating'?'selected':''}>External Communicating</option><option ${ds.patientContact.type==='Implant'?'selected':''}>Implant</option></select></div><div class="form-group"><label class="form-label">Contact Duration</label><select class="form-select" onchange="updatePC(this,'duration')"><option ${ds.patientContact.duration==='Limited (<24 hrs)'?'selected':''}>Limited (&lt;24 hrs)</option><option ${ds.patientContact.duration==='Prolonged (24 hrs - 30 days)'?'selected':''}>Prolonged (24 hrs - 30 days)</option><option ${ds.patientContact.duration==='Permanent (>30 days)'?'selected':''}>Permanent (&gt;30 days)</option></select></div></div></div></div><div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-primary" onclick="toast('Roadmap updated','success')">Apply &amp; Update Roadmap</button><button class="btn btn-ghost" onclick="setActiveTab('roadmap')">View Roadmap &#8594;</button></div>`}
+function updateDS(el,k){const p=getProject();if(!p)return;p.deviceSetup[k]=el.value;saveState()}
+function toggleChar(el,k){const p=getProject();if(!p)return;p.deviceSetup.characteristics[k]=!p.deviceSetup.characteristics[k];el.classList.toggle('on');saveState()}
+function updatePC(el,k){const p=getProject();if(!p)return;p.deviceSetup.patientContact[k]=el.value;saveState()}
+
+// FDA RESEARCH
+function renderFdaResearch(){
+  const el=document.getElementById('fdaResearchList');
+  // Populate company dropdown
+  const sel=document.getElementById('fdaCompany');const cos=[...new Set(S.projects.map(p=>p.company))];sel.innerHTML='<option value="">None</option>'+cos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if(!S.fdaResearch.length){el.innerHTML='<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">No research entries yet</div><div class="empty-desc">Add FDA device research, predicate devices, and regulatory intelligence.</div></div></div></div>';return}
+  el.innerHTML=S.fdaResearch.map((r,i)=>`<div class="research-entry"><div class="research-entry-header"><div style="flex:1"><div style="font-size:15px;font-weight:700">${esc(r.name)}</div>${r.company?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${esc(r.company)}</div>`:''}</div><span class="badge badge-blue">${esc(r.classification||'')}</span><button class="btn-icon" onclick="deleteFda(${i})">&#10005;</button></div><div class="research-field"><span class="rf-label">Product Code:</span><span class="rf-value">${esc(r.productCode||'--')}</span></div><div class="research-field"><span class="rf-label">Regulation Number:</span><span class="rf-value">${esc(r.regNum||'--')}</span></div><div class="research-field"><span class="rf-label">K Number:</span><span class="rf-value">${esc(r.kNum||'--')}</span></div>${r.predicates?`<div class="research-field"><span class="rf-label">Predicates:</span><span class="rf-value" style="white-space:pre-line">${esc(r.predicates)}</span></div>`:''}${r.links?`<div class="research-links"><div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:4px">FDA Links:</div>${r.links.split('\n').filter(l=>l.trim()).map(l=>`<div class="research-link"><a href="${esc(l.trim())}" target="_blank" style="font-size:12px;word-break:break-all">${esc(l.trim())}</a></div>`).join('')}</div>`:''}${r.notes?`<div class="research-notes">${esc(r.notes)}</div>`:''}</div>`).join('')}
+function addFdaEntry(){const n=document.getElementById('fdaName').value.trim();if(!n){toast('Device name required','error');return}S.fdaResearch.push({id:uid(),name:n,productCode:document.getElementById('fdaProductCode').value.trim(),regNum:document.getElementById('fdaRegNum').value.trim(),kNum:document.getElementById('fdaKNum').value.trim(),classification:document.getElementById('fdaClass').value,predicates:document.getElementById('fdaPredicates').value.trim(),links:document.getElementById('fdaLinks').value.trim(),notes:document.getElementById('fdaNotes').value.trim(),company:document.getElementById('fdaCompany').value,created:today()});saveState();renderFdaResearch();closeModal('fdaModal');toast('Research entry saved','success');['fdaName','fdaProductCode','fdaRegNum','fdaKNum','fdaPredicates','fdaLinks','fdaNotes'].forEach(id=>document.getElementById(id).value='')}
+function deleteFda(i){if(!confirm('Delete this research entry?'))return;S.fdaResearch.splice(i,1);saveState();renderFdaResearch()}
+
+// ═══ TEMPLATES ═══
+const TEMPLATES=[
+// 510(k)
+{type:'510(k)',name:'510(k) Clearance',desc:'FDA 510(k) premarket notification for Class II devices',color:'var(--teal)',
+roadmap:[
+{name:'Device Classification & Pathway',desc:'Identify classification, product code, and submission pathway',duration:'2-4 wks',color:'#2B8A7E',tasks:[{name:'Determine Device Classification',desc:'Confirm Class I, II, or III via FDA classification database.',type:'plan',status:'Not Started'},{name:'Identify Product Code & Regulation Number',desc:'Find the CFR part and product code governing your device type.',type:'plan',status:'Not Started'},{name:'Assess Submission Pathway',desc:'Confirm Traditional, Abbreviated, or Special 510(k) is appropriate.',type:'review',status:'Not Started'},{name:'Review Special Controls & Guidance',desc:'Identify special controls, performance standards, applicable FDA guidance.',type:'doc',status:'Not Started'}]},
+{name:'Predicate Device Search & SE',desc:'Identify cleared predicate devices and build SE argument',duration:'6-8 wks',color:'#3182CE',tasks:[{name:'Search FDA 510(k) Premarket Database',desc:'Search accessdata.fda.gov for devices with similar intended use.',type:'plan',status:'Not Started'},{name:'Evaluate Predicate Suitability',desc:'Confirm predicate has same intended use, legally marketed.',type:'review',status:'Not Started'},{name:'Draft Substantial Equivalence Argument',desc:'Document comparison of intended use and technological characteristics.',type:'doc',status:'Not Started'}]},
+{name:'Testing & Performance Verification',desc:'Bench, biocompatibility, electrical, software, and clinical testing',duration:'16-36 wks',color:'#D69E2E',tasks:[{name:'Bench & Performance Testing',desc:'Validate device meets specs per applicable IEC, ASTM, ISO standards.',type:'test',status:'Not Started'},{name:'Electrical Safety (IEC 60601-1)',desc:'Electrical safety testing for powered medical devices.',type:'test',status:'Not Started'},{name:'EMC Testing (IEC 60601-1-2)',desc:'Electromagnetic compatibility testing.',type:'test',status:'Not Started'},{name:'Software Documentation (IEC 62304)',desc:'Software lifecycle, SDS, SRS, hazard analysis, verification.',type:'test',status:'Not Started'},{name:'Human Factors / Usability (IEC 62366-1)',desc:'Summative usability evaluation.',type:'test',status:'Not Started'}]},
+{name:'Technical Documentation & 510(k) Prep',desc:'Assemble all sections and prepare eSTAR package',duration:'8-16 wks',color:'#805AD5',tasks:[{name:'Device Description & Specifications',desc:'Design, materials, components, accessories, principle of operation.',type:'doc',status:'Not Started'},{name:'Intended Use & Indications for Use',desc:'Draft IFU per 21 CFR 807.87(a) format.',type:'doc',status:'Not Started'},{name:'Labeling Package Review',desc:'Review labels, IFU, packaging for 21 CFR Part 801 compliance.',type:'doc',status:'Not Started'},{name:'Performance Standards Section',desc:'Reference applicable national and international standards.',type:'doc',status:'Not Started'},{name:'Compile & Format Test Reports',desc:'Gather test reports into submission-ready format.',type:'doc',status:'Not Started'},{name:'Complete eSTAR Template',desc:'Fill out FDA eSTAR with all required sections.',type:'doc',status:'Not Started'}]},
+{name:'510(k) Submission to FDA',desc:'Submit via eSTAR and pay MDUFA user fee',duration:'1-3 wks',color:'#E53E3E',tasks:[{name:'RTA Self-Check',desc:'Internal review against FDA RTA checklist.',type:'review',status:'Not Started'},{name:'Pay MDUFA User Fee',desc:'Pay FDA user fee (~$24,000).',type:'submit',status:'Not Started'},{name:'Submit via FDA eSTAR Portal',desc:'Submit through FDA CDRH Electronic Submission Gateway.',type:'submit',status:'Not Started'},{name:'Confirm K-Number & RTA Decision',desc:'Receive K-number and RTA acceptance within 15 days.',type:'review',status:'Not Started'}]},
+{name:'FDA Review & Clearance',desc:'Navigate FDA review and respond to AI requests',duration:'90-120 days',color:'#38A169',tasks:[{name:'Monitor Substantive Review',desc:'Track review on FDA database. Average ~97 calendar days.',type:'review',status:'Not Started'},{name:'Respond to AI/Interactive Review',desc:'Prepare responses to Additional Information requests.',type:'doc',status:'Not Started'},{name:'Receive SE Decision Letter',desc:'FDA issues SE decision letter granting clearance.',type:'review',status:'Not Started'},{name:'Post-Clearance Registration & Listing',desc:'Complete establishment registration and device listing.',type:'submit',status:'Not Started'}]}
+],
+checklist:[{section:'ADMINISTRATIVE',items:[{name:'Cover Letter',desc:'Signed letter identifying submitter, device name, submission type',req:'required',checked:false},{name:'Table of Contents',desc:'Organized TOC with section references',req:'required',checked:false},{name:'FDA Form 3514 / STED',desc:'Summary of Technical Evidence or 510(k) Summary',req:'required',checked:false},{name:'Truthful & Accurate Statement',desc:'Signed certification per 21 CFR 807.87(j)',req:'required',checked:false}]},{section:'DEVICE DESCRIPTION',items:[{name:'Detailed Device Description',desc:'Principles of operation, components, design features',req:'required',checked:false},{name:'Device Photos & Diagrams',desc:'High-quality images of all features',req:'required',checked:false},{name:'Technical Specifications',desc:'Performance specs and bill of materials',req:'optional',checked:false}]},{section:'SUBSTANTIAL EQUIVALENCE',items:[{name:'Predicate Device Identification',desc:'510(k) number, device name, applicant, clearance date',req:'required',checked:false},{name:'Comparison Table',desc:'Side-by-side comparison of subject vs. predicate',req:'required',checked:false},{name:'SE Summary or Statement',desc:'Conclusion with supporting rationale',req:'required',checked:false}]},{section:'PERFORMANCE & TESTING',items:[{name:'Bench Performance Testing',desc:'Safety and performance against specifications',req:'required',checked:false},{name:'Electrical Safety / EMC',desc:'IEC 60601 for powered devices',req:'optional',checked:false},{name:'Software Documentation',desc:'IEC 62304 for embedded/standalone software',req:'optional',checked:false},{name:'Human Factors / Usability',desc:'IEC 62366-1 summative evaluation',req:'optional',checked:false},{name:'Shelf Life / Packaging Validation',desc:'ASTM D4169 or equivalent',req:'optional',checked:false}]},{section:'LABELING',items:[{name:'Device Label(s)',desc:'21 CFR Part 801 compliant',req:'required',checked:false},{name:'Instructions for Use (IFU)',desc:'Complete directions, warnings, contraindications',req:'required',checked:false},{name:'Indications for Use Statement',desc:'Signed IFU form per 21 CFR 807.87(e)',req:'required',checked:false}]}],
+timeline:[{name:'Classification & Predicate Research',desc:'Confirm classification, identify product code, locate predicates.',month:'Month 1-2',status:'Not Started',tags:['Class Confirmed','K-Database','Predicate ID']},{name:'Pre-Submission Strategy',desc:'Draft SE argument, testing plan. Assess Q-Sub need.',month:'Month 2-4',status:'Not Started',tags:['SE Argument','Testing Plan','Q-Sub Decision']},{name:'Testing & Verification',desc:'All required bench, biocomp, electrical, software, usability testing.',month:'Month 3-10',status:'Not Started',tags:['Bench','Biocomp','IEC 60601','Software V&V','HF']},{name:'Technical File & eSTAR Assembly',desc:'Complete 510(k) technical file, SE summary, labeling, eSTAR.',month:'Month 8-12',status:'Not Started',tags:['eSTAR','Labeling','RTA Review']},{name:'510(k) Submission',desc:'Submit eSTAR. Pay MDUFA fee. Receive K-number.',month:'Month 12',status:'Not Started',tags:['Fee Paid','K# Assigned','RTA Accepted']},{name:'FDA Review Period',desc:'~90-day FDA review. Respond to AI requests promptly.',month:'Month 12-16',status:'Not Started',tags:['AI Response','Interactive Review']},{name:'510(k) Clearance',desc:'Receive SE letter. Registration, device listing, launch.',month:'Month 15+',status:'Not Started',tags:['SE Letter','Device Listed','Launch']}]},
+// PMA
+{type:'PMA',name:'PMA Approval',desc:'Premarket Approval for Class III high-risk devices',color:'var(--red)',
+roadmap:[
+{name:'Pre-IDE Planning',desc:'Feasibility study design and regulatory strategy',duration:'2-6 mo',color:'#E53E3E',tasks:[{name:'Conduct Feasibility Study',desc:'Early-stage proof of concept and risk assessment.',type:'plan',status:'Not Started'},{name:'Develop Regulatory Strategy',desc:'Determine clinical and non-clinical evidence requirements.',type:'plan',status:'Not Started'},{name:'Pre-Submission Meeting with FDA',desc:'Request and prepare for pre-sub meeting.',type:'review',status:'Not Started'},{name:'Prepare IDE Application',desc:'Draft Investigational Device Exemption application.',type:'doc',status:'Not Started'}]},
+{name:'IDE Clinical Trial',desc:'Conduct pivotal clinical study',duration:'12-36 mo',color:'#805AD5',tasks:[{name:'IDE Submission & Approval',desc:'Submit IDE to FDA and receive approval.',type:'submit',status:'Not Started'},{name:'Site Selection & IRB Approval',desc:'Select clinical sites and obtain IRB approvals.',type:'plan',status:'Not Started'},{name:'Patient Enrollment',desc:'Recruit and enroll study participants.',type:'plan',status:'Not Started'},{name:'Clinical Data Collection & Monitoring',desc:'Collect data per protocol, conduct monitoring visits.',type:'review',status:'Not Started'},{name:'Clinical Study Report',desc:'Prepare final clinical study report.',type:'doc',status:'Not Started'}]},
+{name:'Non-Clinical Testing',desc:'Complete bench, biocompatibility, and reliability testing',duration:'6-18 mo',color:'#D69E2E',tasks:[{name:'Bench Performance Testing',desc:'Validate device performance per applicable standards.',type:'test',status:'Not Started'},{name:'Biocompatibility Testing (ISO 10993)',desc:'Complete biocompatibility evaluation.',type:'test',status:'Not Started'},{name:'Reliability & Shelf Life Testing',desc:'Demonstrate device reliability and shelf life.',type:'test',status:'Not Started'},{name:'Sterilization Validation',desc:'Validate sterilization process if applicable.',type:'test',status:'Not Started'}]},
+{name:'PMA Compilation',desc:'Assemble complete PMA application',duration:'4-8 mo',color:'#3182CE',tasks:[{name:'Non-Clinical Data Package',desc:'Compile all bench and lab testing data.',type:'doc',status:'Not Started'},{name:'Clinical Data Analysis',desc:'Statistical analysis of clinical trial results.',type:'doc',status:'Not Started'},{name:'Manufacturing & QMS Documentation',desc:'Document manufacturing process and quality system.',type:'doc',status:'Not Started'},{name:'Labeling & Risk Analysis',desc:'Final labeling and comprehensive risk analysis.',type:'doc',status:'Not Started'}]},
+{name:'FDA Review & Approval',desc:'PMA submission and FDA panel review',duration:'6-12 mo',color:'#38A169',tasks:[{name:'PMA Submission',desc:'Submit complete PMA application to FDA.',type:'submit',status:'Not Started'},{name:'FDA Advisory Panel Meeting',desc:'Prepare for and attend FDA panel meeting if required.',type:'review',status:'Not Started'},{name:'Respond to Deficiencies',desc:'Address any FDA deficiency letters.',type:'doc',status:'Not Started'},{name:'PMA Approval Decision',desc:'Receive FDA approval order.',type:'review',status:'Not Started'}]}
+],
+checklist:[{section:'ADMINISTRATIVE',items:[{name:'Cover Letter',desc:'Formal PMA submission cover letter',req:'required',checked:false},{name:'Table of Contents',desc:'Comprehensive TOC for all PMA volumes',req:'required',checked:false},{name:'Device Description',desc:'Complete device description with design details',req:'required',checked:false}]},{section:'CLINICAL DATA',items:[{name:'Clinical Study Protocol',desc:'Final approved clinical study protocol',req:'required',checked:false},{name:'Clinical Study Report',desc:'Complete clinical study report with statistical analysis',req:'required',checked:false},{name:'Informed Consent Forms',desc:'IRB-approved informed consent documents',req:'required',checked:false},{name:'Adverse Event Summary',desc:'Complete adverse event tabulation and analysis',req:'required',checked:false}]},{section:'NON-CLINICAL DATA',items:[{name:'Bench Testing Reports',desc:'All performance and safety testing reports',req:'required',checked:false},{name:'Biocompatibility Report',desc:'ISO 10993 biocompatibility evaluation',req:'required',checked:false},{name:'Sterilization Validation',desc:'Sterilization process validation report',req:'optional',checked:false}]},{section:'MANUFACTURING',items:[{name:'Manufacturing Process Description',desc:'Detailed manufacturing process documentation',req:'required',checked:false},{name:'Quality System Documentation',desc:'QMS compliance per 21 CFR 820',req:'required',checked:false}]}],
+timeline:[{name:'Pre-IDE & Feasibility',desc:'Feasibility study, regulatory strategy, FDA pre-sub meeting.',month:'Month 1-6',status:'Not Started',tags:['Feasibility','Pre-Sub','Strategy']},{name:'IDE Submission & Approval',desc:'Submit IDE application, receive FDA approval.',month:'Month 6-9',status:'Not Started',tags:['IDE Filed','IDE Approved']},{name:'Clinical Trial Execution',desc:'Site activation, enrollment, monitoring, close-out.',month:'Month 9-36',status:'Not Started',tags:['Enrollment','Monitoring','CSR']},{name:'Non-Clinical Testing',desc:'Bench, biocomp, reliability, sterilization testing.',month:'Month 6-24',status:'Not Started',tags:['Bench','Biocomp','Reliability']},{name:'PMA Compilation & Submission',desc:'Assemble PMA volumes and submit to FDA.',month:'Month 30-40',status:'Not Started',tags:['PMA Filed']},{name:'FDA Review & Panel',desc:'FDA review, advisory panel, deficiency responses.',month:'Month 40-52',status:'Not Started',tags:['Panel','Deficiencies']},{name:'PMA Approval',desc:'Receive PMA approval order. Begin commercialization.',month:'Month 48-60+',status:'Not Started',tags:['Approved','Launch']}]},
+// De Novo
+{type:'De Novo',name:'De Novo Classification',desc:'Novel device pathway for low-to-moderate risk',color:'var(--green)',
+roadmap:[
+{name:'Classification Research',desc:'Confirm no predicate exists and assess risk',duration:'2-4 wks',color:'#38A169',tasks:[{name:'Confirm No Predicate Exists',desc:'Verify device has no legally marketed predicate.',type:'plan',status:'Not Started'},{name:'Risk Assessment',desc:'Conduct risk-benefit analysis for proposed classification.',type:'review',status:'Not Started'},{name:'Propose Classification & Controls',desc:'Draft proposed classification with special controls.',type:'doc',status:'Not Started'},{name:'Pre-Submission Meeting',desc:'Meet with FDA to discuss De Novo strategy.',type:'review',status:'Not Started'}]},
+{name:'Evidence Development',desc:'Testing and clinical evidence for De Novo request',duration:'12-24 wks',color:'#3182CE',tasks:[{name:'Performance Testing',desc:'Bench testing per applicable standards.',type:'test',status:'Not Started'},{name:'Biocompatibility (if needed)',desc:'ISO 10993 testing if applicable.',type:'test',status:'Not Started'},{name:'Usability / Human Factors',desc:'Human factors evaluation per IEC 62366-1.',type:'test',status:'Not Started'},{name:'Clinical Evidence (if needed)',desc:'Clinical data to support safety and effectiveness.',type:'test',status:'Not Started'}]},
+{name:'De Novo Submission',desc:'Prepare and submit De Novo request',duration:'6-10 wks',color:'#805AD5',tasks:[{name:'Draft De Novo Request',desc:'Prepare complete De Novo classification request.',type:'doc',status:'Not Started'},{name:'Proposed Special Controls',desc:'Document proposed special controls for device type.',type:'doc',status:'Not Started'},{name:'Labeling Preparation',desc:'Draft all labeling materials.',type:'doc',status:'Not Started'},{name:'Submit De Novo Request',desc:'Submit to FDA CDRH.',type:'submit',status:'Not Started'}]},
+{name:'FDA Decision',desc:'FDA review and classification order',duration:'120-150 days',color:'#2B8A7E',tasks:[{name:'Respond to Additional Info Requests',desc:'Address any FDA questions or deficiencies.',type:'doc',status:'Not Started'},{name:'Classification Order Granted',desc:'Receive De Novo classification order from FDA.',type:'review',status:'Not Started'}]}
+],
+checklist:[{section:'CLASSIFICATION',items:[{name:'Predicate Search Documentation',desc:'Evidence that no predicate device exists',req:'required',checked:false},{name:'Proposed Classification',desc:'Proposed product code and classification regulation',req:'required',checked:false},{name:'Special Controls Document',desc:'Proposed special controls for device type',req:'required',checked:false}]},{section:'DEVICE & TESTING',items:[{name:'Device Description',desc:'Complete device description',req:'required',checked:false},{name:'Performance Testing',desc:'All applicable performance test reports',req:'required',checked:false},{name:'Clinical Evidence',desc:'Clinical data if applicable',req:'optional',checked:false}]},{section:'LABELING',items:[{name:'Proposed Labeling',desc:'Draft device labels and IFU',req:'required',checked:false}]}],
+timeline:[{name:'Classification Research',desc:'Confirm no predicate, risk assessment, FDA pre-sub.',month:'Month 1-3',status:'Not Started',tags:['No Predicate','Risk Assessment','Pre-Sub']},{name:'Evidence Development',desc:'Performance testing, biocomp, usability, clinical.',month:'Month 3-9',status:'Not Started',tags:['Testing','Clinical']},{name:'De Novo Submission',desc:'Prepare and submit De Novo request to FDA.',month:'Month 9-11',status:'Not Started',tags:['Submitted']},{name:'FDA Review & Decision',desc:'FDA review ~150 days. Respond to AI requests.',month:'Month 11-16',status:'Not Started',tags:['AI Response']},{name:'Classification Order',desc:'Receive classification order. New product code created.',month:'Month 16+',status:'Not Started',tags:['Classified','Product Code']}]},
+// EU MDR
+{type:'EU MDR',name:'EU MDR Compliance',desc:'European Medical Device Regulation (EU 2017/745) pathway',color:'var(--purple)',
+roadmap:[
+{name:'Gap Analysis',desc:'MDD vs MDR gap assessment and planning',duration:'4-8 wks',color:'#805AD5',tasks:[{name:'MDD vs MDR Gap Assessment',desc:'Identify gaps between current MDD compliance and MDR requirements.',type:'review',status:'Not Started'},{name:'Classification Under MDR',desc:'Confirm device classification per MDR Annex VIII.',type:'plan',status:'Not Started'},{name:'Select Notified Body',desc:'Choose and engage an EU MDR Notified Body.',type:'plan',status:'Not Started'},{name:'UDI System Planning',desc:'Plan Unique Device Identification implementation.',type:'plan',status:'Not Started'}]},
+{name:'Technical Documentation',desc:'Prepare MDR-compliant technical documentation',duration:'12-24 wks',color:'#3182CE',tasks:[{name:'Device Description & Specification',desc:'Complete device description per MDR Annex II.',type:'doc',status:'Not Started'},{name:'Risk Management (ISO 14971)',desc:'Complete risk management file per ISO 14971.',type:'doc',status:'Not Started'},{name:'Clinical Evaluation Report',desc:'Prepare CER per MEDDEV 2.7/1 Rev 4 or MDR Article 61.',type:'doc',status:'Not Started'},{name:'Post-Market Surveillance Plan',desc:'Develop PMS plan per MDR Article 84.',type:'doc',status:'Not Started'},{name:'Post-Market Clinical Follow-up',desc:'PMCF plan and protocol development.',type:'doc',status:'Not Started'}]},
+{name:'QMS Alignment',desc:'Align quality system to MDR and ISO 13485',duration:'8-16 wks',color:'#D69E2E',tasks:[{name:'ISO 13485 Audit Readiness',desc:'Ensure QMS meets ISO 13485:2016 requirements.',type:'review',status:'Not Started'},{name:'GSPR Checklist Completion',desc:'Complete General Safety and Performance Requirements checklist.',type:'doc',status:'Not Started'},{name:'Labeling & IFU Update',desc:'Update labeling to meet MDR Annex I requirements.',type:'doc',status:'Not Started'},{name:'EUDAMED Registration Prep',desc:'Prepare for EUDAMED database registration.',type:'plan',status:'Not Started'}]},
+{name:'Certification',desc:'Notified Body audit and CE marking',duration:'3-6 mo',color:'#38A169',tasks:[{name:'Notified Body Audit',desc:'Complete NB audit of technical documentation and QMS.',type:'review',status:'Not Started'},{name:'Address Non-Conformities',desc:'Resolve any findings from NB audit.',type:'doc',status:'Not Started'},{name:'CE Marking & Declaration of Conformity',desc:'Apply CE mark and issue DoC.',type:'submit',status:'Not Started'},{name:'Market Placement',desc:'Place device on EU market with full MDR compliance.',type:'submit',status:'Not Started'}]}
+],
+checklist:[{section:'TECHNICAL DOCUMENTATION',items:[{name:'Device Description (Annex II)',desc:'Complete device description per MDR format',req:'required',checked:false},{name:'Risk Management File',desc:'ISO 14971 compliant risk management',req:'required',checked:false},{name:'Clinical Evaluation Report',desc:'CER per MEDDEV 2.7/1 Rev 4',req:'required',checked:false},{name:'GSPR Checklist',desc:'General Safety and Performance Requirements',req:'required',checked:false}]},{section:'POST-MARKET',items:[{name:'PMS Plan',desc:'Post-Market Surveillance plan',req:'required',checked:false},{name:'PMCF Plan',desc:'Post-Market Clinical Follow-up plan',req:'required',checked:false},{name:'PSUR Template',desc:'Periodic Safety Update Report template',req:'required',checked:false}]},{section:'LABELING & UDI',items:[{name:'Updated Labeling',desc:'MDR Annex I compliant labeling',req:'required',checked:false},{name:'UDI Assignment',desc:'UDI-DI and UDI-PI assignment',req:'required',checked:false}]}],
+timeline:[{name:'Gap Analysis & Planning',desc:'MDD vs MDR gaps, classification, Notified Body selection.',month:'Month 1-2',status:'Not Started',tags:['Gap Analysis','Classification','NB Selected']},{name:'Technical Documentation',desc:'Device description, risk management, CER, PMS plan.',month:'Month 2-8',status:'Not Started',tags:['CER','Risk File','PMS']},{name:'QMS Alignment',desc:'ISO 13485 readiness, GSPR, labeling, EUDAMED prep.',month:'Month 6-10',status:'Not Started',tags:['ISO 13485','GSPR','UDI']},{name:'NB Audit & Certification',desc:'Notified Body audit, resolve findings, CE marking.',month:'Month 10-14',status:'Not Started',tags:['NB Audit','CE Mark']},{name:'Market Placement',desc:'EU market placement with full MDR compliance.',month:'Month 14+',status:'Not Started',tags:['DoC','Market']}]},
+// QMS
+{type:'QMS',name:'QMS Creation',desc:'Quality Management System per ISO 13485 / 21 CFR 820',color:'var(--amber)',
+roadmap:[
+{name:'QMS Planning & Gap Assessment',desc:'Evaluate current state and plan QMS implementation',duration:'2-4 wks',color:'#D69E2E',tasks:[{name:'Current State Assessment',desc:'Evaluate existing quality processes and documentation.',type:'review',status:'Not Started'},{name:'Regulatory Requirements Mapping',desc:'Map applicable requirements (ISO 13485, 21 CFR 820, EU MDR).',type:'plan',status:'Not Started'},{name:'QMS Implementation Plan',desc:'Develop project plan with milestones and responsibilities.',type:'plan',status:'Not Started'}]},
+{name:'Quality Policy & Organization',desc:'Establish quality policy, objectives, and organizational structure',duration:'2-4 wks',color:'#2B8A7E',tasks:[{name:'Quality Policy & Objectives',desc:'Draft and approve quality policy and measurable objectives.',type:'doc',status:'Not Started'},{name:'Organization Chart & Responsibilities',desc:'Define quality roles, responsibilities, and authority.',type:'doc',status:'Not Started'},{name:'Management Representative Appointment',desc:'Appoint QMS management representative.',type:'plan',status:'Not Started'}]},
+{name:'Core QMS Procedures',desc:'Develop essential quality system procedures',duration:'8-16 wks',color:'#3182CE',tasks:[{name:'Document Control Procedure',desc:'SOP for document creation, review, approval, distribution.',type:'doc',status:'Not Started'},{name:'Record Control Procedure',desc:'SOP for record retention, protection, retrieval.',type:'doc',status:'Not Started'},{name:'CAPA Procedure',desc:'Corrective and Preventive Action process.',type:'doc',status:'Not Started'},{name:'Internal Audit Procedure',desc:'SOP for planning and conducting internal audits.',type:'doc',status:'Not Started'},{name:'Management Review Procedure',desc:'Process for periodic management review of QMS.',type:'doc',status:'Not Started'},{name:'Training Procedure',desc:'SOP for training needs, execution, and records.',type:'doc',status:'Not Started'},{name:'Supplier Management Procedure',desc:'SOP for supplier qualification and monitoring.',type:'doc',status:'Not Started'},{name:'Complaint Handling Procedure',desc:'Process for receiving, investigating, and resolving complaints.',type:'doc',status:'Not Started'}]},
+{name:'Design & Production Controls',desc:'Design control, production, and purchasing procedures',duration:'6-12 wks',color:'#805AD5',tasks:[{name:'Design Control Procedure',desc:'SOP per 21 CFR 820.30 / ISO 13485 clause 7.3.',type:'doc',status:'Not Started'},{name:'Risk Management Procedure',desc:'Risk management process per ISO 14971.',type:'doc',status:'Not Started'},{name:'Production Controls',desc:'Manufacturing process controls and work instructions.',type:'doc',status:'Not Started'},{name:'Purchasing Controls',desc:'Purchasing and incoming inspection procedures.',type:'doc',status:'Not Started'}]},
+{name:'Validation & Audit Readiness',desc:'Validate QMS and prepare for certification audit',duration:'4-8 wks',color:'#38A169',tasks:[{name:'Process Validation',desc:'Validate key manufacturing and quality processes.',type:'test',status:'Not Started'},{name:'Internal Audit Execution',desc:'Conduct comprehensive internal audit of QMS.',type:'review',status:'Not Started'},{name:'Management Review',desc:'Conduct first formal management review.',type:'review',status:'Not Started'},{name:'Certification Audit Preparation',desc:'Prepare for ISO 13485 certification audit.',type:'plan',status:'Not Started'}]}
+],
+checklist:[{section:'QUALITY SYSTEM',items:[{name:'Quality Manual',desc:'Quality management system manual',req:'required',checked:false},{name:'Quality Policy',desc:'Documented quality policy',req:'required',checked:false},{name:'Quality Objectives',desc:'Measurable quality objectives',req:'required',checked:false}]},{section:'PROCEDURES',items:[{name:'Document Control SOP',desc:'Document creation, review, approval process',req:'required',checked:false},{name:'CAPA SOP',desc:'Corrective and preventive action process',req:'required',checked:false},{name:'Internal Audit SOP',desc:'Audit planning and execution process',req:'required',checked:false},{name:'Management Review SOP',desc:'Periodic management review process',req:'required',checked:false},{name:'Complaint Handling SOP',desc:'Complaint investigation process',req:'required',checked:false},{name:'Training SOP',desc:'Training management process',req:'required',checked:false}]},{section:'DESIGN & PRODUCTION',items:[{name:'Design Control SOP',desc:'Design and development control process',req:'required',checked:false},{name:'Risk Management SOP',desc:'Risk management per ISO 14971',req:'required',checked:false}]}],
+timeline:[{name:'Planning & Gap Assessment',desc:'Current state evaluation, requirements mapping, implementation plan.',month:'Month 1',status:'Not Started',tags:['Assessment','Plan']},{name:'Core Procedures',desc:'Develop all core QMS procedures and forms.',month:'Month 2-5',status:'Not Started',tags:['SOPs','Forms','Templates']},{name:'Design & Production Controls',desc:'Design control, risk management, production procedures.',month:'Month 4-7',status:'Not Started',tags:['Design Control','Risk Mgmt']},{name:'Validation & Audit',desc:'Process validation, internal audit, management review.',month:'Month 7-9',status:'Not Started',tags:['Validation','Internal Audit']},{name:'Certification',desc:'ISO 13485 certification audit.',month:'Month 9-12',status:'Not Started',tags:['Cert Audit','ISO 13485']}]},
+// Clinical
+{type:'Clinical',name:'Clinical Trial',desc:'IDE clinical trial planning and execution',color:'var(--blue)',
+roadmap:[
+{name:'Study Design & Protocol',desc:'Design clinical study and develop protocol',duration:'4-12 wks',color:'#3182CE',tasks:[{name:'Define Study Objectives',desc:'Primary and secondary endpoints, study hypothesis.',type:'plan',status:'Not Started'},{name:'Study Design Selection',desc:'Choose randomized, single-arm, cross-over, etc.',type:'plan',status:'Not Started'},{name:'Sample Size Calculation',desc:'Statistical power analysis for sample size.',type:'plan',status:'Not Started'},{name:'Protocol Development',desc:'Draft complete clinical study protocol.',type:'doc',status:'Not Started'},{name:'Statistical Analysis Plan',desc:'Develop SAP with planned statistical methods.',type:'doc',status:'Not Started'}]},
+{name:'Regulatory & Ethics',desc:'IDE submission, IRB approvals, regulatory compliance',duration:'4-12 wks',color:'#805AD5',tasks:[{name:'IDE Application',desc:'Prepare and submit IDE application to FDA.',type:'doc',status:'Not Started'},{name:'IRB Submission',desc:'Submit protocol to IRB for ethical review.',type:'submit',status:'Not Started'},{name:'Informed Consent Development',desc:'Draft IRB-compliant informed consent form.',type:'doc',status:'Not Started'},{name:'Clinical Site Agreements',desc:'Execute clinical trial agreements with sites.',type:'doc',status:'Not Started'}]},
+{name:'Site Activation & Enrollment',desc:'Activate clinical sites and begin patient enrollment',duration:'12-48 wks',color:'#38A169',tasks:[{name:'Site Initiation Visits',desc:'Conduct SIVs at all participating clinical sites.',type:'review',status:'Not Started'},{name:'Patient Screening & Enrollment',desc:'Screen and enroll patients per inclusion/exclusion criteria.',type:'plan',status:'Not Started'},{name:'Data Collection & Monitoring',desc:'Collect study data, conduct monitoring visits.',type:'review',status:'Not Started'},{name:'Safety Monitoring',desc:'Monitor adverse events and safety signals.',type:'review',status:'Not Started'}]},
+{name:'Study Close-Out & Reporting',desc:'Close study, analyze data, prepare reports',duration:'8-16 wks',color:'#D69E2E',tasks:[{name:'Database Lock',desc:'Finalize and lock clinical database.',type:'review',status:'Not Started'},{name:'Statistical Analysis',desc:'Execute statistical analysis per SAP.',type:'doc',status:'Not Started'},{name:'Clinical Study Report',desc:'Prepare ICH E3 compliant clinical study report.',type:'doc',status:'Not Started'},{name:'Site Close-Out',desc:'Conduct close-out visits at all sites.',type:'review',status:'Not Started'}]}
+],
+checklist:[{section:'PROTOCOL',items:[{name:'Clinical Protocol',desc:'Final approved clinical study protocol',req:'required',checked:false},{name:'Statistical Analysis Plan',desc:'Pre-specified SAP',req:'required',checked:false},{name:'Case Report Forms',desc:'Validated CRFs',req:'required',checked:false}]},{section:'REGULATORY',items:[{name:'IDE Application',desc:'FDA IDE application (if applicable)',req:'optional',checked:false},{name:'IRB Approval',desc:'Ethics committee approval',req:'required',checked:false},{name:'Informed Consent',desc:'IRB-approved ICF',req:'required',checked:false}]},{section:'REPORTING',items:[{name:'Clinical Study Report',desc:'ICH E3 compliant CSR',req:'required',checked:false},{name:'Adverse Event Summary',desc:'Complete AE tabulation',req:'required',checked:false}]}],
+timeline:[{name:'Study Design',desc:'Protocol development, sample size, SAP.',month:'Month 1-3',status:'Not Started',tags:['Protocol','SAP']},{name:'Regulatory Approvals',desc:'IDE submission, IRB approval, site agreements.',month:'Month 3-6',status:'Not Started',tags:['IDE','IRB','Sites']},{name:'Enrollment',desc:'Site activation, patient screening and enrollment.',month:'Month 6-18',status:'Not Started',tags:['SIVs','Enrollment']},{name:'Follow-Up & Monitoring',desc:'Patient follow-up, monitoring, safety review.',month:'Month 12-24',status:'Not Started',tags:['Monitoring','Safety']},{name:'Close-Out & Reporting',desc:'Database lock, analysis, CSR preparation.',month:'Month 24-28',status:'Not Started',tags:['DB Lock','CSR']}]}
+];
+
+function renderTemplates(){document.getElementById('templatesGrid').innerHTML=TEMPLATES.map((t,i)=>`<div class="card" style="cursor:pointer;border-top:3px solid ${t.color}" onclick="applyTemplate(${i})"><div class="card-body"><div style="font-size:15px;font-weight:700;margin-bottom:4px">${esc(t.name)}</div><div style="font-size:12px;color:var(--text-muted);line-height:1.4">${esc(t.desc)}</div><div style="margin-top:10px;font-size:11px;color:var(--text-muted)">${t.roadmap.length} phases &middot; ${t.roadmap.reduce((a,p)=>a+p.tasks.length,0)} tasks</div></div></div>`).join('')}
+function applyTemplate(i){document.getElementById('npWorkstream').value=TEMPLATES[i].type;openModal('newProjectModal');toast(`Selected ${TEMPLATES[i].name} template.`,'info')}
+
+function refreshAll(){renderSidebarProjects();renderDashboard();renderTemplates();if(S.currentProject!==null)renderWorkstream();if(S.currentPage==='fda-research')renderFdaResearch()}
+
+document.getElementById('loginBtn').addEventListener('click',handleLogin);
+document.getElementById('loginEmail').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginPassword').focus()});
+document.getElementById('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin()});
+document.getElementById('signOutBtn').addEventListener('click',handleSignOut);
+document.getElementById('noteDate').value=today();
+checkSession();
+</script>
+
+</body>
+</html>
